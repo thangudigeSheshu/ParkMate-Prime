@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>ParkMate Prime | Trust Center</title>
+
+<link rel="icon" type="image/png" sizes="128x128" href="/logo.png?v=20260418">
+<link rel="shortcut icon" href="/logo.png?v=20260418">
+<link rel="apple-touch-icon" href="/logo.png?v=20260418">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root{
+--bg:#0d1117;
+--navy:#0f2044;
+--navy-soft:#10192d;
+--orange:#ff9900;
+--green:#00c853;
+--cyan:#00b4d8;
+--red:#ef233c;
+--text:#fff;
+--text2:rgba(255,255,255,0.72);
+--text3:rgba(255,255,255,0.52);
+--card:rgba(255,255,255,0.04);
+--card-strong:rgba(255,255,255,0.06);
+--border:rgba(255,255,255,0.08);
+--shadow:0 18px 44px rgba(0,0,0,0.3);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+font-family:'DM Sans',sans-serif;
+background:
+radial-gradient(circle at top left, rgba(15,32,68,0.7), transparent 28%),
+linear-gradient(180deg, #0d1117 0%, #0a0f18 100%);
+color:var(--text);
+overflow-x:hidden;
+}
+a{color:inherit}
+
+/* TOPBAR */
+.topbar{
+position:fixed;
+top:0;
+left:0;
+right:0;
+height:60px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 20px;
+background:rgba(6,14,31,0.88);
+backdrop-filter:blur(14px);
+-webkit-backdrop-filter:blur(14px);
+border-bottom:1px solid var(--border);
+z-index:1000;
+}
+.topbar-left{
+display:flex;
+align-items:center;
+gap:12px;
+min-width:0;
+}
+.brand{
+font-family:'Syne',sans-serif;
+font-weight:800;
+font-size:1.15rem;
+text-decoration:none;
+display:flex;
+align-items:center;
+gap:10px;
+min-width:0;
+}
+.brand-icon{
+width:28px;
+height:28px;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:8px;
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(0,180,216,0.5);
+box-shadow:0 0 10px rgba(0,180,216,0.24);
+flex:0 0 auto;
+}
+.brand-icon img{
+width:100%;
+height:100%;
+object-fit:contain;
+display:block;
+transform:scale(1.15) translateY(5%);
+}
+.brand span{color:var(--orange)}
+.menu-btn{
+cursor:pointer;
+font-size:1.3rem;
+border:none;
+background:transparent;
+color:#fff;
+width:36px;
+height:36px;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:10px;
+}
+.menu-btn:hover{background:var(--card)}
+
+/* BACK BUTTON */
+.back-btn{
+width:36px;
+height:36px;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:10px;
+background:var(--card);
+border:1px solid var(--border);
+color:white;
+text-decoration:none;
+transition:0.3s;
+flex:0 0 auto;
+}
+.back-btn:hover{
+background:rgba(255,153,0,0.1);
+border-color:var(--orange);
+color:var(--orange);
+transform:translateX(-2px);
+}
+
+/* SIDEBAR */
+.sidebar{
+position:fixed;
+top:0;
+left:-260px;
+width:260px;
+height:100%;
+background:#060e1f;
+border-right:1px solid var(--border);
+transition:left 0.3s ease;
+padding-top:68px;
+z-index:1100;
+}
+.sidebar.active{left:0}
+.sidebar a{
+display:flex;
+align-items:center;
+gap:10px;
+padding:12px 20px;
+color:var(--text2);
+text-decoration:none;
+}
+.sidebar a:hover,
+.sidebar a.active{
+background:var(--card);
+color:#fff;
+}
+
+.overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.6);
+opacity:0;
+pointer-events:none;
+transition:0.3s;
+z-index:1050;
+}
+.overlay.active{
+opacity:1;
+pointer-events:auto;
+}
+
+/* MAIN */
+.main{
+padding-top:60px;
+max-width:1100px;
+margin:auto;
+}
+
+/* HERO */
+.hero{
+padding:20px;
+border-bottom:1px solid var(--border);
+background:linear-gradient(180deg, rgba(15,32,68,0.28), transparent 100%);
+}
+.hero h1{
+font-family:'Syne',sans-serif;
+font-size:clamp(2.1rem, 6vw, 3.2rem);
+line-height:1.03;
+}
+.hero h1 span{color:var(--orange);font-style:italic}
+.hero p{
+color:var(--text2);
+margin-top:12px;
+max-width:680px;
+font-size:1rem;
+}
+
+.search{
+margin-top:18px;
+background:var(--card);
+padding:12px 14px;
+border-radius:12px;
+border:1px solid var(--border);
+display:flex;
+align-items:center;
+gap:10px;
+}
+.search i{color:var(--text3)}
+.search input{
+background:none;
+border:none;
+outline:none;
+color:white;
+width:100%;
+font:inherit;
+}
+.search-status{
+margin-top:12px;
+color:var(--text2);
+font-size:0.95rem;
+}
+
+/* SECTION */
+.section{
+padding:30px 20px;
+scroll-margin-top:76px;
+}
+.eyebrow{
+font-size:0.72rem;
+letter-spacing:0.22em;
+text-transform:uppercase;
+color:var(--orange);
+margin-bottom:8px;
+}
+.title{
+font-family:'Syne',sans-serif;
+font-size:1.7rem;
+margin-bottom:20px;
+}
+.lead{
+color:var(--text2);
+max-width:660px;
+margin-bottom:18px;
+}
+
+/* GRID */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+}
+.card{
+background:var(--card);
+padding:18px;
+border-radius:12px;
+border:1px solid var(--border);
+transition:0.3s;
+}
+.card:hover{
+transform:translateY(-5px);
+border-color:var(--orange);
+}
+.card-icon{
+width:42px;
+height:42px;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:12px;
+background:var(--card-strong);
+margin-bottom:12px;
+}
+.card-title{
+font-family:'Syne',sans-serif;
+font-size:1.05rem;
+margin-bottom:6px;
+}
+.card-desc{color:var(--text2);font-size:0.95rem}
+
+/* POLICY CARD */
+.policy-card{
+background:var(--card);
+padding:25px;
+border-radius:14px;
+border:1px solid var(--border);
+margin-top:20px;
+transition:0.3s;
+box-shadow:var(--shadow);
+}
+.policy-card:hover{
+transform:translateY(-4px);
+border-color:var(--orange);
+}
+
+/* HEADER */
+.policy-header{
+display:flex;
+align-items:flex-start;
+justify-content:space-between;
+gap:14px;
+margin-bottom:15px;
+flex-wrap:wrap;
+}
+.policy-header-left{
+display:flex;
+align-items:flex-start;
+gap:12px;
+min-width:0;
+}
+.ph-icon{
+width:40px;
+height:40px;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:10px;
+background:var(--card-strong);
+flex:0 0 auto;
+}
+.ph-title{
+font-family:'Syne',sans-serif;
+font-size:1.2rem;
+}
+.ph-date{
+color:var(--text3);
+font-size:0.84rem;
+margin-top:4px;
+}
+.ph-badge{
+padding:7px 11px;
+border-radius:999px;
+background:rgba(255,255,255,0.05);
+border:1px solid var(--border);
+color:var(--text2);
+font-size:0.82rem;
+white-space:nowrap;
+}
+
+/* CONTENT */
+.prose h3{
+margin-top:16px;
+font-family:'Syne',sans-serif;
+font-size:1.02rem;
+}
+.prose h4{
+margin-top:14px;
+font-family:'Syne',sans-serif;
+font-size:0.95rem;
+}
+.prose p{
+color:var(--text2);
+margin-top:8px;
+}
+.prose ul{
+padding-left:18px;
+margin-top:8px;
+}
+.prose li{
+color:var(--text2);
+margin-top:6px;
+}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;margin-top:14px}
+table{width:100%;border-collapse:collapse}
+td,th{
+padding:12px 10px;
+border-bottom:1px solid var(--border);
+text-align:left;
+vertical-align:top;
+}
+th{font-family:'Syne',sans-serif;font-size:0.95rem}
+.amount{color:var(--orange);font-weight:700}
+
+/* SPECIAL CARDS */
+.data-card,
+.contact-card{
+margin-top:16px;
+background:rgba(255,255,255,0.03);
+border:1px solid var(--border);
+border-radius:12px;
+padding:16px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:14px;
+flex-wrap:wrap;
+}
+.data-card p,
+.contact-card p{margin-top:4px}
+.dc-btn,
+.copy-btn{
+border:none;
+cursor:pointer;
+background:rgba(255,153,0,0.1);
+color:var(--orange);
+padding:10px 14px;
+border-radius:10px;
+font:inherit;
+font-weight:600;
+border:1px solid rgba(255,153,0,0.18);
+}
+.dc-btn:hover,
+.copy-btn:hover{background:rgba(255,153,0,0.16)}
+
+/* REFUND SPECIAL */
+#refunds .policy-card{
+background:linear-gradient(135deg,rgba(0,200,83,0.05),transparent);
+border:1px solid rgba(0,200,83,0.2);
+}
+#refunds .policy-card:hover{border-color:var(--green)}
+#refunds strong{color:var(--green)}
+
+/* FOOTER */
+.footer{
+text-align:center;
+padding:28px 20px 36px;
+color:var(--text2);
+border-top:1px solid var(--border);
+margin-top:18px;
+}
+
+/* TOASTS */
+#toasts{
+position:fixed;
+right:16px;
+bottom:16px;
+display:flex;
+flex-direction:column;
+gap:10px;
+z-index:1200;
+}
+.toast{
+padding:12px 14px;
+border-radius:12px;
+background:#101826;
+border:1px solid var(--border);
+box-shadow:var(--shadow);
+color:#fff;
+}
+
+@media (min-width: 901px){
+.menu-btn,.overlay,.sidebar{display:none}
+.main{padding-top:72px}
+.hero{padding:28px 20px}
+}
+
+@media (max-width: 900px){
+.main{padding-top:60px}
+}
+
+@media (max-width: 640px){
+.topbar{padding:0 14px}
+.brand{font-size:0.98rem;gap:8px}
+.hero{padding:16px}
+.hero h1{font-size:2.2rem}
+.hero p{font-size:0.95rem}
+.section{padding:24px 16px}
+.title{font-size:1.45rem}
+.policy-card{padding:18px}
+.policy-header{gap:12px}
+.data-card,
+.contact-card{padding:14px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <div class="topbar-left">
+        <a href="index.html?v=2" class="back-btn" aria-label="Back to dashboard">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <a href="index.html?v=2" class="brand">
+            <div class="brand-icon"><img src="logo.png" alt="Logo"></div>
+            ParkMate <span>Prime</span>
+        </a>
+    </div>
+
+    <button class="menu-btn" onclick="toggleMenu()" aria-label="Open menu">
+        <i class="fas fa-bars"></i>
+    </button>
+</div>
+
+<div class="sidebar" id="sidebar">
+    <a href="#overview" onclick="closeMenu()"><i class="fas fa-shield-alt"></i> Trust</a>
+    <a href="#rules" onclick="closeMenu()"><i class="fas fa-gavel"></i> Rules</a>
+    <a href="#violations" onclick="closeMenu()"><i class="fas fa-ticket-alt"></i> Violations</a>
+    <a href="#privacy" onclick="closeMenu()"><i class="fas fa-user-lock"></i> Privacy</a>
+    <a href="#refunds" onclick="closeMenu()"><i class="fas fa-undo"></i> Refund</a>
+    <a href="#contact" onclick="closeMenu()"><i class="fas fa-headset"></i> Contact</a>
+</div>
+
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<div class="main">
+
+<div class="hero">
+    <h1>Trust & <span>Transparency</span></h1>
+    <p>Clear rules. Fair policies. Secure data. Everything you need to know about parking with ParkMate Prime.</p>
+    <div class="search">
+        <i class="fas fa-search"></i>
+        <input id="policySearch" type="text" placeholder="Search rules, fines, or policies..." oninput="searchPolicies()">
+    </div>
+    <div class="search-status" id="policySearchStatus">Search any policy, fine, privacy rule, or support detail.</div>
+</div>
+
+<div class="section" id="overview">
+    <div class="eyebrow">Commitment</div>
+    <div class="title">Trust Pillars</div>
+    <div class="grid">
+        <div class="card searchable">
+            <div class="card-icon"><i class="fas fa-lock"></i></div>
+            <div class="card-title">AES-256 Security</div>
+            <div class="card-desc">Your payment and vehicle data are military-grade encrypted.</div>
+        </div>
+        <div class="card searchable">
+            <div class="card-icon"><i class="fas fa-balance-scale"></i></div>
+            <div class="card-title">Fair Pricing</div>
+            <div class="card-desc">No hidden surges. What you see on the app is exactly what you pay.</div>
+        </div>
+        <div class="card searchable">
+            <div class="card-icon"><i class="fas fa-eye-slash"></i></div>
+            <div class="card-title">Privacy First</div>
+            <div class="card-desc">We never sell your data. Logs are auto-deleted after 30 days.</div>
+        </div>
+        <div class="card searchable">
+            <div class="card-icon"><i class="fas fa-hand-holding-usd"></i></div>
+            <div class="card-title">Instant Refunds</div>
+            <div class="card-desc">Cancelled within 5 minutes? Automated refund to your wallet instantly.</div>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="rules">
+    <div class="title">Parking Rules</div>
+    <div class="policy-card searchable">
+        <div class="policy-header">
+            <div class="policy-header-left">
+                <div class="ph-icon"><i class="fas fa-gavel"></i></div>
+                <div>
+                    <div class="ph-title">General Parking Rules</div>
+                    <div class="ph-date">Last updated: Oct 12, 2025</div>
+                </div>
+            </div>
+            <div class="ph-badge"><i class="fas fa-check-circle"></i> Enforced Globally</div>
+        </div>
+
+        <div class="prose">
+            <h3>1. Slot Adherence</h3>
+            <p>Users must park <strong>strictly within the designated yellow lines</strong> of their booked slot number. Parking across multiple slots or in unassigned slots, especially Reserved or EV bays, will trigger an immediate system alert via overhead cameras.</p>
+
+            <h3>2. Speed & Safety</h3>
+            <p>The speed limit inside all ParkMate facilities is <strong>10 km/h</strong>. Hazard lights must be turned on when reversing or finding your slot. Honking is strictly prohibited unless in an emergency.</p>
+
+            <h3>3. EV Charging Bays</h3>
+            <p>EV slots in Zone Q and R are exclusively for actively charging electric vehicles. Once your vehicle reaches 100% charge, you have a <strong>30-minute grace period</strong> to unplug and move your car to a standard slot to avoid idle fees.</p>
+
+            <h3>4. Overnight Parking</h3>
+            <p>Overnight parking between 12:00 AM and 06:00 AM requires a specific overnight pass. Regular hourly tickets extending into this period automatically accrue an <strong>INR 80</strong> flat overnight surcharge.</p>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="violations">
+    <div class="title">Violations & Penalties</div>
+    <div class="policy-card searchable">
+        <div class="policy-header">
+            <div class="policy-header-left">
+                <div class="ph-icon" style="background:rgba(239,35,60,0.1);color:var(--red)"><i class="fas fa-ticket-alt"></i></div>
+                <div>
+                    <div class="ph-title">Violation Matrix</div>
+                    <div class="ph-date">Standard Matrix v3.0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="prose">
+            <p>To maintain a frictionless experience for all users, our AI system automatically flags violations. Fines are deducted directly from your ParkMate Wallet or billed to your linked vehicle profile.</p>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Violation</th>
+                        <th>Description</th>
+                        <th>Penalty</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Overstay</strong></td>
+                        <td>Exceeding booked time by more than 15 minutes</td>
+                        <td class="amount">INR 100 + INR 50 / 30 min</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Wrong Slot</strong></td>
+                        <td>Parking in a slot not assigned to your token</td>
+                        <td class="amount">INR 200 flat fee</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EV Idle Blocking</strong></td>
+                        <td>Staying in EV bay 30 minutes after full charge</td>
+                        <td class="amount">INR 5 / minute</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Disabled Bay Misuse</strong></td>
+                        <td>Parking in a handicap slot without permit</td>
+                        <td class="amount">INR 1,000 + towing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Towing / Relocation</strong></td>
+                        <td>Vehicle causing severe obstruction</td>
+                        <td class="amount">INR 2,000 + transport</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="privacy">
+    <div class="title">Data Privacy</div>
+    <div class="policy-card searchable">
+        <div class="policy-header">
+            <div class="policy-header-left">
+                <div class="ph-icon" style="background:rgba(0,180,216,0.1);color:var(--cyan)"><i class="fas fa-user-lock"></i></div>
+                <div>
+                    <div class="ph-title">Data Privacy & Retention</div>
+                    <div class="ph-date">DPDP Act Compliant</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="prose">
+            <h3>What We Collect</h3>
+            <ul>
+                <li><strong>Identity:</strong> Name, phone number, and email.</li>
+                <li><strong>Vehicle:</strong> Registration number, make, and model.</li>
+                <li><strong>Telemetry:</strong> Entry and exit timestamps plus camera footage of your plate.</li>
+            </ul>
+
+            <h3>How We Use It</h3>
+            <p>Your data is used solely to facilitate parking, billing, and security. We do not run ads, and we never sell your telemetry or personal data to brokers or insurance companies.</p>
+        </div>
+
+        <div class="data-card">
+            <div>
+                <div class="card-title">Take Control of Your Data</div>
+                <p>You have the right to instantly erase your local data and session history from this device.</p>
+            </div>
+            <button class="dc-btn" onclick="clearMyData()"><i class="fas fa-trash-alt"></i> Clear My Data</button>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="refunds">
+    <div class="title">Refund Policy</div>
+    <div class="policy-card searchable">
+        <div class="policy-header">
+            <div class="policy-header-left">
+                <div class="ph-icon"><i class="fas fa-undo"></i></div>
+                <div>
+                    <div class="ph-title">Refund Rules</div>
+                    <div class="ph-date">Automated Refund Logic</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="prose">
+            <h3>Instant Cancellation</h3>
+            <p>Bookings canceled within <strong>5 minutes</strong> are eligible for a full automated wallet refund.</p>
+
+            <h3>Partial Refund</h3>
+            <p>Bookings canceled before entry may receive an <strong>80% refund</strong>, depending on slot lock and system allocation status.</p>
+
+            <h3>No Refund</h3>
+            <ul>
+                <li>After entry has been recorded</li>
+                <li>For violation-linked penalties or obstruction events</li>
+                <li>For misuse of reserved, EV, or disabled parking bays</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="section" id="contact">
+    <div class="eyebrow">Support</div>
+    <div class="title">Grievance Redressal</div>
+    <div class="lead">Have an issue with a fine, a payment failure, or a damaged vehicle? Our support and legal desk are available to help.</div>
+
+    <div class="grid">
+        <div class="contact-card searchable">
+            <div>
+                <div class="card-title">Toll-Free Helpline</div>
+                <p>1800-PARK-NOW</p>
+            </div>
+            <button class="copy-btn" onclick="copyContact('1800-PARK-NOW')"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+
+        <div class="contact-card searchable">
+            <div>
+                <div class="card-title">Email Support</div>
+                <p>support@parkmate.in</p>
+            </div>
+            <button class="copy-btn" onclick="copyContact('support@parkmate.in')"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+
+        <div class="contact-card searchable">
+            <div>
+                <div class="card-title">Grievance Officer</div>
+                <p>Aditi Sharma</p>
+                <p style="color:var(--text3);font-size:0.9rem">legal@parkmate.in</p>
+            </div>
+            <button class="copy-btn" onclick="copyContact('legal@parkmate.in')"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<div class="footer">© 2026 ParkMate Prime. Legal & Compliance Division.</div>
+
+<div id="toasts"></div>
+
+<script>
+function toggleMenu(){
+    document.getElementById('sidebar').classList.toggle('active');
+    document.getElementById('overlay').classList.toggle('active');
+}
+
+function closeMenu(){
+    document.getElementById('sidebar').classList.remove('active');
+    document.getElementById('overlay').classList.remove('active');
+}
+
+function searchPolicies(){
+    const query = document.getElementById('policySearch').value.toLowerCase().trim();
+    const blocks = document.querySelectorAll('.searchable');
+    const status = document.getElementById('policySearchStatus');
+    let found = 0;
+
+    blocks.forEach((block) => {
+        const text = block.innerText.toLowerCase();
+        const visible = !query || text.includes(query);
+        block.style.display = visible ? '' : 'none';
+        if (query && visible) found++;
+    });
+
+    if (!query) {
+        status.textContent = 'Search any policy, fine, privacy rule, or support detail.';
+        return;
+    }
+
+    status.textContent = found
+        ? `${found} matching section${found === 1 ? '' : 's'} found.`
+        : 'No results found. Try refund, EV, privacy, support, or fine.';
+}
+
+function copyContact(value){
+    navigator.clipboard.writeText(value)
+        .then(() => showToast(`Copied: ${value}`))
+        .catch(() => showToast('Copy failed'));
+}
+
+function clearMyData(){
+    if (!confirm('This will permanently delete all your ParkMate data from this device. Are you sure?')) return;
+    const keys = [
+        'pmCurrentUser',
+        'currentUser',
+        'pmUser',
+        'activeTicket',
+        'bookedSlots',
+        'admin_records',
+        'historyLog',
+        'pm_user_id',
+        'pm_session_token',
+        'pm_device_id',
+        'pm_last_active',
+        'pm_active_tickets',
+        'pm_active_ticket_selected',
+        'parkmate_booking_sync',
+        'pm_ticket_banner_snapshot',
+        'pm_session_user'
+    ];
+    keys.forEach((key) => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+    });
+    Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('pm_active_ticket')) localStorage.removeItem(key);
+    });
+    showToast('All local ParkMate data cleared.');
+    setTimeout(() => {
+        window.location.href = 'index.html?v=2';
+    }, 1200);
+}
+
+function showToast(message){
+    const wrap = document.getElementById('toasts');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    wrap.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        toast.style.transition = '0.25s ease';
+        setTimeout(() => toast.remove(), 260);
+    }, 2200);
+}
+
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 900) closeMenu();
+});
+</script>
+
+</body>
+</html>

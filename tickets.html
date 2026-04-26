@@ -1,0 +1,3055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  
+  <title>ParkMate Prime | My Tickets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="icon" type="image/png" sizes="128x128" href="/logo.png?v=20260418">
+<link rel="shortcut icon" href="/logo.png?v=20260418">
+<link rel="apple-touch-icon" href="/logo.png?v=20260418">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script>
+    window.Swal = {
+      fire: function(arg1, arg2, arg3) {
+        return new Promise((resolve) => {
+          let opts = {};
+          if (typeof arg1 === 'string') {
+            opts = { title: arg1, text: arg2, icon: arg3 };
+          } else {
+            opts = arg1;
+          }
+          
+          let timerId;
+          let closeModal = function() {
+            if (timerId) clearTimeout(timerId);
+            if (opts.willClose) opts.willClose();
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.remove(), 300);
+          };
+          
+          const overlay = document.createElement('div');
+          overlay.className = 'glass-swal-overlay';
+          
+          if (opts.allowOutsideClick !== false) {
+            overlay.addEventListener('click', (e) => {
+              if (e.target === overlay) {
+                closeModal();
+                resolve({ isConfirmed: false, isDismissed: true });
+              }
+            });
+          }
+          
+          const box = document.createElement('div');
+          box.className = 'glass-swal-box';
+          box.style.position = 'relative';
+          
+          const closeBtn = document.createElement('button');
+          closeBtn.innerHTML = '✕';
+          closeBtn.style.cssText = 'position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.1);border:none;color:white;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:0.2s;z-index:10;';
+          closeBtn.onmouseover = () => closeBtn.style.background = 'rgba(255,255,255,0.2)';
+          closeBtn.onmouseout = () => closeBtn.style.background = 'rgba(255,255,255,0.1)';
+          closeBtn.onclick = () => {
+            closeModal();
+            resolve({ isConfirmed: false, isDismissed: true });
+          };
+          box.appendChild(closeBtn);
+          
+          let html = '';
+          if (opts.icon) {
+            const icons = {
+               warning: '<span class="glass-swal-icon" style="color:#f59e0b;">⚠️</span>',
+               error: '<span class="glass-swal-icon" style="color:#ef4444;">❌</span>',
+               success: '<span class="glass-swal-icon" style="color:#10b981;">✅</span>',
+               info: '<span class="glass-swal-icon" style="color:#3b82f6;">ℹ️</span>'
+            };
+            if (icons[opts.icon]) html += icons[opts.icon];
+          }
+          if (opts.imageUrl) {
+            html += `<img src="${opts.imageUrl}" style="width:${opts.imageWidth || 200}px; height:${opts.imageHeight || 200}px; border-radius:16px; margin: 0 auto 24px; display:block; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">`;
+          }
+          if (opts.title) html += `<h3 class="glass-swal-title">${opts.title}</h3>`;
+          if (opts.html) html += `<div class="glass-swal-html">${opts.html}</div>`;
+          else if (opts.text) html += `<p class="glass-swal-text">${opts.text}</p>`;
+          
+          const btnWrap = document.createElement('div');
+          btnWrap.className = 'glass-swal-btns';
+          
+          let inputEl = null;
+          let validationEl = document.createElement('div');
+          validationEl.className = 'glass-swal-validation';
+          if (opts.input) {
+            if (opts.inputLabel) {
+               html += `<div style="text-align:left;font-size:0.85rem;color:rgba(255,255,255,0.7);margin-bottom:8px;font-weight:600;">${opts.inputLabel}</div>`;
+            }
+            inputEl = document.createElement('input');
+            inputEl.type = opts.input === 'number' ? 'number' : 'text';
+            inputEl.className = 'glass-swal-input';
+            inputEl.placeholder = opts.inputPlaceholder || '';
+          }
+          
+          box.innerHTML = html;
+          if (inputEl) {
+              box.appendChild(inputEl);
+              box.appendChild(validationEl);
+          }
+          
+          if (opts.showCancelButton) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'glass-swal-btn cancel';
+            cancelBtn.innerHTML = opts.cancelButtonText || 'Cancel';
+            if (opts.cancelButtonColor) cancelBtn.style.background = opts.cancelButtonColor;
+            cancelBtn.onclick = () => {
+              closeModal();
+              resolve({ isConfirmed: false, isDismissed: true });
+            };
+            btnWrap.appendChild(cancelBtn);
+          }
+          
+          if (opts.showConfirmButton !== false) {
+            const confirmBtn = document.createElement('button');
+            confirmBtn.className = 'glass-swal-btn confirm';
+            confirmBtn.innerHTML = opts.confirmButtonText || 'OK';
+            if (opts.confirmButtonColor) confirmBtn.style.background = opts.confirmButtonColor;
+            confirmBtn.onclick = async () => {
+              if (opts.inputValidator && inputEl) {
+                 const validationMsg = await opts.inputValidator(inputEl.value);
+                 if (validationMsg) {
+                    validationEl.textContent = validationMsg;
+                    validationEl.style.display = 'block';
+                    inputEl.classList.add('error');
+                    return;
+                 }
+              }
+              closeModal();
+              resolve({ isConfirmed: true, value: inputEl ? inputEl.value : true });
+            };
+            btnWrap.appendChild(confirmBtn);
+          }
+          
+          if (btnWrap.children.length > 0) box.appendChild(btnWrap);
+          overlay.appendChild(box);
+          document.body.appendChild(overlay);
+          
+          if (inputEl) { setTimeout(() => inputEl.focus(), 100); }
+          if (opts.timer) {
+             timerId = setTimeout(() => {
+                 closeModal();
+                 resolve({ isConfirmed: false, isDismissed: true });
+             }, opts.timer);
+          }
+          
+          requestAnimationFrame(() => {
+             overlay.classList.add('show');
+             if (opts.didOpen) opts.didOpen();
+          });
+        });
+
+      }
+    };
+  </script>
+  <style>
+    /* Glassmorphism Swal Replacement */
+    .glass-swal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: rgba(3, 7, 18, 0.72);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      padding: 20px;
+    }
+    .glass-swal-overlay.show { opacity: 1; }
+    .glass-swal-box {
+      width: min(420px, calc(100vw - 32px));
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(10, 16, 31, 0.96));
+      border: 1px solid rgba(59, 130, 246, 0.22);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 28px 80px rgba(2, 6, 23, 0.44);
+      transform: scale(0.95) translateY(20px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      color: #ffffff;
+      text-align: center;
+    }
+    .glass-swal-overlay.show .glass-swal-box { transform: scale(1) translateY(0); }
+    .glass-swal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+    .glass-swal-text {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .glass-swal-html {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .glass-swal-html strong, .glass-swal-html b { color: #ffffff; font-weight: 700; }
+    .glass-swal-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      margin-bottom: 24px;
+      outline: none;
+      transition: 0.2s;
+    }
+    .glass-swal-input:focus {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.05);
+    }
+    .glass-swal-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+    .glass-swal-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      width: 100%;
+      margin-top: 24px;
+    }
+    .glass-swal-btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 14px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .glass-swal-btn.confirm {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    }
+    .glass-swal-btn.confirm:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4);
+    }
+    .glass-swal-btn.cancel {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      border: 1px solid transparent;
+    }
+    .glass-swal-btn.cancel:hover { background: rgba(255, 255, 255, 0.12); }
+    .glass-swal-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .glass-swal-validation {
+      color: #ef4444;
+      font-size: 0.85rem;
+      margin-top: -16px;
+      margin-bottom: 20px;
+      text-align: left;
+      display: none;
+    }
+
+    :root {
+      --bg: #060e1f;
+      --panel: rgba(15, 23, 42, 0.94);
+      --panel-2: rgba(17, 24, 39, 0.96);
+      --line: rgba(255,255,255,0.08);
+      --text: #f8fafc;
+      --muted: rgba(226,232,240,0.62);
+      --gold: #ffb347;
+      --orange: #ff9900;
+      --green: #7ef0a8;
+      --blue: #3b82f6;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "DM Sans", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.12), transparent 22%),
+        radial-gradient(circle at bottom right, rgba(249,115,22,0.10), transparent 26%),
+        linear-gradient(180deg, #081122 0%, #060e1f 100%);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 26px 0 40px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(140deg, rgba(15,23,42,0.86), rgba(19,30,58,0.74));
+      box-shadow: 0 24px 64px rgba(2, 6, 23, 0.32);
+      margin-bottom: 22px;
+    }
+
+    .hero-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      font-family: "Syne", sans-serif;
+      font-size: clamp(1.35rem, 2vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .hero-title span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .count-badge {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 179, 71, 0.32);
+      background: rgba(255, 179, 71, 0.12);
+      color: var(--gold);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      white-space: nowrap;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 0 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.07);
+      color: var(--text);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .cards {
+      display: grid;
+      gap: 18px;
+    }
+
+    .ticket-card {
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at top right, rgba(99,102,241,0.16), transparent 24%),
+        linear-gradient(145deg, var(--panel), var(--panel-2));
+      box-shadow: 0 24px 60px rgba(2, 6, 23, 0.34);
+      overflow: hidden;
+    }
+
+    .ticket-card::before {
+      content: "";
+      display: block;
+      height: 4px;
+      background: linear-gradient(90deg, #ff9f1c, #6366f1);
+    }
+
+    .ticket-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 22px 24px 14px;
+    }
+
+    .slot {
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .token {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 1rem;
+      word-break: break-all;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(34,197,94,0.18);
+      background: rgba(34,197,94,0.10);
+      color: var(--green);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0 24px 20px;
+    }
+
+    .field {
+      min-height: 86px;
+      padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .label {
+      margin-bottom: 8px;
+      color: rgba(255,255,255,0.44);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-weight: 700;
+    }
+
+    .value {
+      font-size: 0.98rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .value.hi { color: var(--gold); font-weight: 700; }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      padding: 0 24px 24px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-width: 170px;
+      min-height: 48px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 14px;
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .btn-photo {
+      background: linear-gradient(135deg, #f59e0b, #f97316);
+      box-shadow: 0 14px 28px rgba(249, 115, 22, 0.18);
+    }
+
+    .btn-arrived {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 14px 28px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-arrived[disabled] {
+      opacity: 0.7;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn-exit {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 14px 28px rgba(220, 38, 38, 0.18);
+    }
+
+    .arrival-panel {
+      border: 1px solid rgba(16, 185, 129, 0.16);
+      background: linear-gradient(145deg, rgba(16, 185, 129, 0.08), rgba(15, 23, 42, 0.22));
+    }
+
+    .arrival-panel .value {
+      color: #d1fae5;
+    }
+
+    .empty {
+      padding: 84px 24px;
+      text-align: center;
+      border: 1px dashed var(--line);
+      border-radius: 28px;
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        width: min(100%, calc(100% - 20px));
+        padding-top: 16px;
+      }
+
+      .hero {
+        padding: 14px 16px;
+        border-radius: 22px;
+      }
+
+      .hero-title {
+        font-size: 0.9rem;
+        gap: 8px;
+      }
+
+      .hero-actions {
+        gap: 8px;
+      }
+
+      .count-badge {
+        padding: 6px 9px;
+        font-size: 0.58rem;
+      }
+
+      .back-btn {
+        min-height: 38px;
+        padding: 0 12px;
+        font-size: 0.84rem;
+      }
+
+      .ticket-head,
+      .fields,
+      .actions {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .fields { grid-template-columns: 1fr; }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+
+    /* ── EXIT & PAY MODAL ── */
+    #exitPayModal {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      padding: 20px; background: rgba(3, 7, 18, 0.72); backdrop-filter: blur(12px); z-index: 12500;
+    }
+    #exitPayModal.open { display: flex; }
+    .ep-card {
+      width: min(420px, calc(100vw - 32px));
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(10, 16, 31, 0.96));
+      border: 1px solid rgba(59, 130, 246, 0.22);
+      border-radius: 24px;
+      box-shadow: 0 28px 80px rgba(2, 6, 23, 0.44);
+      animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.95) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .ep-head { padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; }
+    .ep-title { font-family: "Syne", sans-serif; font-size: 1.35rem; font-weight: 800; color: #fff; }
+    .ep-body { padding: 24px; }
+    .ep-row { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: center; }
+    .ep-row-label { color: #94a3b8; font-size: 0.85rem; }
+    .ep-row-val { font-family: "JetBrains Mono", monospace; font-weight: 600; color: #f8fafc; font-size: 0.9rem; }
+    .ep-bill-box { margin: 20px 0; padding: 24px; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(59, 130, 246, 0.25); border-radius: 16px; text-align: center; }
+    .ep-bill-amt { font-family: "Syne", sans-serif; font-size: 2.8rem; font-weight: 800; color: #3b82f6; line-height: 1; margin-bottom: 8px; }
+    .ep-bill-desc { font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); }
+    .ep-wallet { padding: 16px; border-radius: 16px; background: rgba(255, 255, 255, 0.03); display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border: 1px solid rgba(255, 255, 255, 0.08); }
+    .ep-wallet.suff { border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05); }
+    .ep-wallet.insuff { border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); }
+    .ep-actions { display: flex; gap: 12px; }
+    .ep-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-weight: 700; font-family: "Syne", sans-serif; cursor: pointer; transition: 0.2s ease; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .ep-btn-cancel { background: rgba(255, 255, 255, 0.08); color: white; }
+    .ep-btn-cancel:hover { background: rgba(255, 255, 255, 0.12); }
+    .ep-btn-pay { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+    .ep-btn-pay:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(16, 185, 129, 0.4); }
+    .ep-btn-add { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3); }
+    .ep-btn-add:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(239, 68, 68, 0.4); }
+
+    /* ── WALLET MODAL ── */
+    #walletModal {
+      position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+      padding: 20px; background: rgba(3, 7, 18, 0.72); backdrop-filter: blur(12px); z-index: 13000;
+    }
+    #walletModal.open { display: flex; }
+    body.payment-locked {
+      overflow: hidden;
+      touch-action: none;
+    }
+    body.payment-locked > * {
+      pointer-events: none;
+      user-select: none;
+    }
+    body.payment-locked .page {
+      pointer-events: none;
+      user-select: none;
+    }
+    body.payment-locked #exitPayModal,
+    body.payment-locked #walletModal,
+    body.payment-locked .glass-swal-overlay {
+      pointer-events: auto !important;
+    }
+    body.payment-locked .back-btn {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .wm-card {
+      width: min(420px, calc(100vw - 32px));
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(10, 16, 31, 0.96));
+      border: 1px solid rgba(59, 130, 246, 0.22);
+      border-radius: 24px;
+      box-shadow: 0 28px 80px rgba(2, 6, 23, 0.44);
+      animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wm-head { padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; }
+    .wm-title { font-family: "Syne", sans-serif; font-size: 1.35rem; font-weight: 800; color: #fff; }
+    .wm-body { padding: 24px; }
+    .wm-bal-box {
+      background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(59, 130, 246, 0.25);
+      border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 20px;
+    }
+    .wm-bal-lbl { font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; }
+    .wm-bal-val { font-family: "Syne", sans-serif; font-size: 2.8rem; font-weight: 800; color: #3b82f6; line-height: 1; }
+    .wm-prime-note { font-size: 0.75rem; color: var(--gold); margin-top: 10px; display: none; }
+    .wm-rec-note { font-size: 0.8rem; color: #60a5fa; margin-top: 10px; display: none; background: rgba(59,130,246,0.1); padding: 4px 10px; border-radius: 8px; display: inline-block; }
+    .wm-input-wrap { position: relative; margin-bottom: 16px; }
+    .wm-input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .wm-input {
+      width: 100%; padding: 14px 16px 14px 40px; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; color: #fff;
+      font-size: 1.1rem; font-family: "DM Sans", sans-serif; outline: none; transition: 0.2s; box-sizing: border-box;
+    }
+    .wm-input:focus { border-color: #3b82f6; background: rgba(59,130,246,0.05); }
+    .wm-quick-amts { display: flex; gap: 10px; margin-bottom: 24px; }
+    .wm-qbtn {
+      flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03); color: #fff; font-weight: 600; cursor: pointer; transition: 0.2s;
+      font-family: "Syne", sans-serif;
+    }
+    .wm-qbtn:hover { border-color: #3b82f6; background: rgba(59,130,246,0.1); color: #3b82f6; transform: translateY(-2px); }
+    .wm-actions { display: flex; gap: 12px; }
+    .wm-btn-add { flex: 2; padding: 14px; border-radius: 14px; border: none; font-weight: 700; font-family: "Syne", sans-serif; cursor: pointer; transition: 0.2s ease; font-size: 0.95rem; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .wm-btn-add:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4); }
+    .wm-btn-add:disabled { opacity: 0.7; pointer-events: none; }
+
+    /* ── TICKET PHOTO MODAL ── */
+    #ticketPhotoModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(3, 7, 18, 0.84);
+      backdrop-filter: blur(14px);
+      z-index: 12050;
+    }
+    .ticket-photo-shell {
+      width: min(1180px, 100%);
+      height: min(88vh, 860px);
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 22%), radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.12), transparent 26%), rgba(8, 13, 28, 0.98);
+      box-shadow: 0 32px 80px rgba(2, 6, 23, 0.38);
+      display: flex;
+      flex-direction: column;
+    }
+    .ticket-photo-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(15, 23, 42, 0.82);
+    }
+    .ticket-photo-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-family: "Syne", sans-serif;
+      font-size: clamp(1rem, 1.6vw, 1.25rem);
+      font-weight: 700;
+    }
+    .ticket-photo-close {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .ticket-photo-frame {
+      flex: 1;
+      width: 100%;
+      border: 0;
+      background: #091225;
+    }
+
+    body.page-loading { overflow: hidden; }
+    .page-loader {
+      position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at top left, rgba(59,130,246,0.12), transparent 22%), radial-gradient(circle at bottom right, rgba(249,115,22,0.10), transparent 26%), #060e1f;
+      backdrop-filter: blur(16px); transition: opacity 0.35s ease, visibility 0.35s ease;
+    }
+    .page-loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .page-loader-card {
+      width: min(420px, calc(100vw - 32px));
+      padding: 28px 24px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(10, 16, 31, 0.94));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      text-align: center;
+    }
+    .page-loader-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 18px;
+    }
+    .page-loader-brand span {
+      color: #ff9900;
+    }
+    .page-loader-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      box-shadow: none;
+    }
+    .page-loader-title { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 8px; }
+    .page-loader-sub { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 20px; }
+    .page-loader-bar { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+    .page-loader-fill { width: 42%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3b82f6, #ff9900, #3b82f6); background-size: 200% 100%; animation: loaderSlide 1.2s linear infinite; }
+    @keyframes loaderSlide { 0% { transform: translateX(-60%); background-position: 0% 50%; } 100% { transform: translateX(210%); background-position: 200% 50%; } }
+  </style>
+</head>
+<body class="page-loading">
+  <div class="page-loader" id="pageLoader">
+    <div class="page-loader-card">
+      <div class="page-loader-brand">
+        <div class="page-loader-icon" style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(0, 180, 216, 0.5); box-shadow: 0 0 20px rgba(0, 180, 216, 0.3); padding: 6px; border-radius: 14px; backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;"><img src="logo.png" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.15) translateY(5%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" alt="Logo"></div>
+        ParkMate<span>Prime</span>
+      </div>
+      <div class="page-loader-title">Loading Tickets</div>
+      <div class="page-loader-sub">Syncing your active parking sessions...</div>
+      <div class="page-loader-bar"><div class="page-loader-fill"></div></div>
+    </div>
+  </div>
+  <div class="page">
+    <div class="hero">
+      <div class="hero-title">
+        <i class="fas fa-ticket-alt" style="color:#ff9900;"></i>
+        <span>My Active Tickets</span>
+      </div>
+      <div class="hero-actions">
+        <span class="count-badge" id="ticketCountBadge">0 ACTIVE</span>
+        <a class="back-btn" href="index.html?v=20260404.5">
+          <i class="fas fa-arrow-left"></i>
+          Dashboard
+        </a>
+      </div>
+    </div>
+    <div class="cards" id="ticketsGrid"></div>
+  </div>
+
+  <!-- EXIT & PAY MODAL -->
+  <div id="exitPayModal" onclick="if(event.target===this)closeExitPayModal()">
+    <div class="ep-card">
+      <div class="ep-head">
+        <div class="ep-title">Exit & Pay</div>
+        <button class="ticket-photo-close" onclick="closeExitPayModal()">✕</button>
+      </div>
+      <div class="ep-body">
+        <div class="ep-row">
+          <span class="ep-row-label">Token</span>
+          <span class="ep-row-val" id="epToken">--</span>
+        </div>
+        <div class="ep-row">
+          <span class="ep-row-label">Duration</span>
+          <span class="ep-row-val" id="epDuration">--</span>
+        </div>
+        <div class="ep-row">
+          <span class="ep-row-label">Rate</span>
+          <span class="ep-row-val" id="epRate">--</span>
+        </div>
+        <div class="ep-row" id="epCashbackRow" style="display:none; color:var(--gold);">
+          <span class="ep-row-label" style="color:var(--gold);"><i class="fas fa-star"></i> Prime Cashback</span>
+          <span class="ep-row-val" id="epCashbackVal">+₹0</span>
+        </div>
+
+        <div class="ep-bill-box">
+          <div class="ep-bill-amt" id="epBillAmt">₹0</div>
+          <div class="ep-bill-desc">Dynamic pricing applied · Total Bill</div>
+        </div>
+
+        <div class="ep-wallet" id="epWalletBox">
+          <div>
+            <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:2px;">Wallet Balance</div>
+            <div style="font-weight:700; font-size:1.1rem; color:#fff;" id="epWalletBal">₹0.00</div>
+          </div>
+          <div id="epWalletStat" style="font-size:0.85rem; font-weight:600;">--</div>
+        </div>
+
+        <div class="ep-actions">
+          <button class="ep-btn ep-btn-cancel" onclick="closeExitPayModal()">Cancel</button>
+          <button class="ep-btn ep-btn-pay" id="epPayBtn" onclick="confirmExitPay()">Pay</button>
+          <button class="ep-btn ep-btn-add" id="epAddBtn" style="display:none;">Add Money</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WALLET MODAL -->
+  <div id="walletModal" onclick="if(event.target===this)closeWalletModal()">
+    <div class="wm-card">
+      <div class="wm-head">
+        <div class="wm-title">Add Money</div>
+        <button class="ticket-photo-close" onclick="closeWalletModal()">✕</button>
+      </div>
+      <div class="wm-body">
+        <div class="wm-bal-box">
+          <div class="wm-bal-lbl">Current Balance</div>
+          <div class="wm-bal-val" id="wmBal">₹0.00</div>
+          <div id="wmRecNoteWrap" style="display:none;"><div class="wm-rec-note" id="wmRecNote"></div></div>
+          <div class="wm-prime-note" id="wmPrimeNote"><i class="fas fa-star"></i> Prime cashback active</div>
+        </div>
+        <div class="wm-input-wrap">
+          <i class="fas fa-rupee-sign wm-input-icon"></i>
+          <input type="number" id="wmAddAmount" class="wm-input" placeholder="Enter amount to add" min="1" />
+        </div>
+        <div class="wm-quick-amts">
+          <button class="wm-qbtn" onclick="setWmAmount(100)">+₹100</button>
+          <button class="wm-qbtn" onclick="setWmAmount(500)">+₹500</button>
+          <button class="wm-qbtn" onclick="setWmAmount(1000)">+₹1000</button>
+        </div>
+        <div class="wm-actions">
+          <button class="ep-btn ep-btn-cancel" onclick="closeWalletModal()">Cancel</button>
+          <button class="wm-btn-add" id="wmSubmitBtn" onclick="processWalletAdd()">Add Funds</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TICKET PHOTO MODAL -->
+  <div id="ticketPhotoModal" onclick="if(event.target===this)closeTicketPhotoModal()">
+    <div class="ticket-photo-shell">
+      <div class="ticket-photo-head">
+        <div class="ticket-photo-title">
+          <i class="fas fa-image"></i> <span>Ticket Photo</span>
+        </div>
+        <button class="ticket-photo-close" onclick="closeTicketPhotoModal()">✕</button>
+      </div>
+      <iframe class="ticket-photo-frame" id="ticketPhotoFrame"></iframe>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const APP_VERSION = "20260404.5";
+      const ACTIVE_TICKETS_KEY = "pm_active_tickets";
+      const ACTIVE_TICKET_SELECTED_KEY = "pm_active_ticket_selected";
+      const PAYMENT_LOCK_KEY = "pm_unpaid_expired_lock_v1";
+      const PAYMENT_MODE_LOCK_KEY = "pm_payment_mode_lock_v1";
+      const PAYMENT_SUCCESS_REDIRECT_KEY = "pm_payment_success_redirect_v1";
+      const TICKET_LIFECYCLE_STATE_KEY = "pm_ticket_lifecycle_state_v1";
+      const ARRIVAL_CANCEL_NOTICE_KEY = "pm_arrival_cancel_notice_seen_v1";
+
+      let pendingExitData = null;
+      let activeExitTicket = null;
+      let exitRequestInFlight = false;
+      let pendingExitAction = "exit_ticket";
+      let mandatoryPaymentActive = false;
+      let paymentHistoryLockArmed = false;
+      let timer = null;
+      let timeLeft = 10;
+      let timerElement = null;
+      const PAYMENT_POPUP_ID = "exitPayModal";
+      try { history.scrollRestoration = "manual"; } catch { }
+
+      function isPendingExpiredTicket(ticket) {
+        return !!ticket && (
+          ticket.status === "expired" ||
+          ticket.payment_required === 1 ||
+          ticket.payment_required === true ||
+          ticket.pending_payment === true
+        );
+      }
+
+      function applyMandatoryPaymentUi() {
+        const epCancel = document.querySelector("#exitPayModal .ep-actions .ep-btn-cancel");
+        if (epCancel) epCancel.style.display = "inline-flex";
+
+        const wmCancel = document.querySelector("#walletModal .wm-actions .ep-btn-cancel");
+        if (wmCancel) wmCancel.style.display = "inline-flex";
+
+        const wmClose = document.querySelector("#walletModal .ticket-photo-close");
+        if (wmClose) wmClose.style.display = "inline-flex";
+      }
+
+      function startPaymentLock() {
+        document.body.style.pointerEvents = "none";
+        const paymentPopup = document.getElementById(PAYMENT_POPUP_ID);
+        const walletPopup = document.getElementById("walletModal");
+        if (paymentPopup) paymentPopup.style.pointerEvents = "auto";
+        if (walletPopup) walletPopup.style.pointerEvents = "auto";
+      }
+
+      function enterFullscreen() {
+        try {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          }
+        } catch { }
+      }
+
+      function requestPaymentFullscreenNow() {
+        if (!mandatoryPaymentActive) return;
+        if (document.fullscreenElement) return;
+        enterFullscreen();
+      }
+
+      function unlockAfterPayment() {
+        document.body.style.pointerEvents = "auto";
+      }
+
+      function isPaymentInputTarget(target) {
+        return !!target && (
+          target.closest?.("#exitPayModal, #walletModal") &&
+          /input|textarea|select/i.test(target.tagName || "")
+        );
+      }
+
+      function isAllowedPaymentKey(event) {
+        const key = String(event.key || "");
+        const lower = key.toLowerCase();
+        const target = event.target;
+        const insidePayment = !!target?.closest?.("#exitPayModal, #walletModal");
+        if (!insidePayment) return false;
+
+        if (lower === "tab" || lower === "enter" || lower === " ") return true;
+        if (isPaymentInputTarget(target)) {
+          if (
+            key.length === 1 ||
+            ["backspace", "delete", "arrowleft", "arrowright", "home", "end", "tab", "enter"].includes(lower)
+          ) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function preventLockedKeys(e) {
+        if (!mandatoryPaymentActive) return;
+        if (isAllowedPaymentKey(e)) return;
+        const key = String(e.key || "").toLowerCase();
+        const blockRefresh = key === "f5" || ((e.ctrlKey || e.metaKey) && key === "r");
+        const blockHistory = (e.altKey && (key === "arrowleft" || key === "arrowright"));
+        const blockEscape = key === "escape";
+        const isTypingTarget = isPaymentInputTarget(e.target);
+        const blockBackspace = key === "backspace" && !isTypingTarget;
+        const blockEverythingElse = true;
+        if (blockRefresh || blockHistory || blockEscape || blockBackspace || blockEverythingElse) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation?.();
+        }
+      }
+
+      function showPayment() {
+        const paymentPopup = document.getElementById(PAYMENT_POPUP_ID);
+        if (paymentPopup) paymentPopup.classList.add("open");
+        startPaymentMode();
+        requestPaymentFullscreenNow();
+        setTimeout(requestPaymentFullscreenNow, 60);
+        setTimeout(requestPaymentFullscreenNow, 260);
+      }
+
+      function startPaymentMode() {
+        mandatoryPaymentActive = true;
+        localStorage.setItem(PAYMENT_MODE_LOCK_KEY, "true");
+        applyMandatoryPaymentUi();
+        document.body.classList.add("payment-locked");
+        enterFullscreen();
+        startPaymentLock();
+        try {
+          history.pushState(null, null, location.href);
+        } catch { }
+        window.onpopstate = function () {
+          if (!mandatoryPaymentActive) return;
+          try { history.pushState(null, null, location.href); } catch { }
+          const lock = loadPaymentLock();
+          if (lock?.ticket) restoreLockedPaymentIfAny(lock.ticket);
+        };
+        document.removeEventListener("keydown", preventLockedKeys, true);
+        document.addEventListener("keydown", preventLockedKeys, true);
+        window.onbeforeunload = function () {
+          if (mandatoryPaymentActive) {
+            return "Complete payment first!";
+          }
+          return null;
+        };
+      }
+
+      function stopPaymentMode() {
+        mandatoryPaymentActive = false;
+        localStorage.removeItem(PAYMENT_MODE_LOCK_KEY);
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+        document.body.classList.remove("payment-locked");
+        unlockAfterPayment();
+        window.onpopstate = null;
+        window.onbeforeunload = null;
+        document.removeEventListener("keydown", preventLockedKeys, true);
+        try {
+          if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          }
+        } catch { }
+      }
+
+      function armMandatoryHistoryLock() {
+        if (!mandatoryPaymentActive) return;
+        try {
+          if (!paymentHistoryLockArmed) {
+            history.replaceState({ pm_lock_root: 1 }, "");
+            paymentHistoryLockArmed = true;
+          }
+          history.pushState({ pm_lock: 1 }, "");
+          history.pushState({ pm_lock: 2 }, "");
+        } catch { }
+      }
+
+      function setMandatoryPaymentMode(on) {
+        if (on) {
+          startPaymentMode();
+          armMandatoryHistoryLock();
+        } else {
+          stopPaymentMode();
+        }
+      }
+
+      window.addEventListener("popstate", () => {
+        if (!mandatoryPaymentActive) return;
+        try {
+          armMandatoryHistoryLock();
+          const lock = loadPaymentLock();
+          if (lock?.ticket) {
+            restoreLockedPaymentIfAny(lock.ticket);
+          }
+        } catch { }
+      });
+
+      window.addEventListener("pageshow", () => {
+        if (!mandatoryPaymentActive) return;
+        const lock = loadPaymentLock();
+        if (lock?.ticket) restoreLockedPaymentIfAny(lock.ticket);
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState !== "visible" || !mandatoryPaymentActive) return;
+        const lock = loadPaymentLock();
+        if (lock?.ticket) restoreLockedPaymentIfAny(lock.ticket);
+      });
+
+      document.addEventListener("contextmenu", (event) => {
+        if (!mandatoryPaymentActive) return;
+        event.preventDefault();
+        event.stopPropagation();
+      }, true);
+
+      ["click", "mousedown", "mouseup", "touchstart", "touchend", "pointerdown"].forEach((eventName) => {
+        document.addEventListener(eventName, (event) => {
+          if (!mandatoryPaymentActive) return;
+          const target = event.target;
+          const insidePayment = target?.closest?.("#exitPayModal, #walletModal, .glass-swal-overlay, .glass-swal-box");
+          if (insidePayment) return;
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation?.();
+        }, true);
+      });
+
+      document.addEventListener("wheel", (event) => {
+        if (!mandatoryPaymentActive) return;
+        const insidePayment = event.target?.closest?.("#exitPayModal, #walletModal, .glass-swal-overlay, .glass-swal-box");
+        if (insidePayment) return;
+        event.preventDefault();
+        event.stopPropagation();
+      }, { capture: true, passive: false });
+
+      document.addEventListener("fullscreenchange", () => {
+        if (!mandatoryPaymentActive) return;
+        if (document.fullscreenElement) return;
+        const lock = loadPaymentLock();
+        Swal.fire(
+          "Payment Pending",
+          `Complete payment first for ${lock?.ticket?.slot ? `Slot #${lock.ticket.slot}` : "this expired ticket"}. Fullscreen payment mode is still active.`,
+          "warning"
+        ).then(() => {
+          if (lock?.ticket) restoreLockedPaymentIfAny(lock.ticket);
+          setTimeout(requestPaymentFullscreenNow, 0);
+        });
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (!mandatoryPaymentActive) return;
+        if (isAllowedPaymentKey(event)) return;
+        const key = String(event.key || "").toLowerCase();
+        const blockRefresh = key === "f5" || ((event.ctrlKey || event.metaKey) && key === "r");
+        const blockEscape = key === "escape";
+        const isTypingTarget = isPaymentInputTarget(event.target);
+        const blockBackspace = key === "backspace" && !isTypingTarget;
+        const blockHistoryNav = event.altKey && (key === "arrowleft" || key === "arrowright");
+        if (blockRefresh || blockEscape || blockBackspace || blockHistoryNav) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }, true);
+
+      function getPrimeState() {
+        try {
+          const user = JSON.parse(localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "null");
+          const prime = user?.prime || {};
+          return { active: !!prime.active };
+        } catch (error) {
+          return { active: false };
+        }
+      }
+
+      function normalizeTicket(ticket) {
+        if (!ticket || typeof ticket !== "object") return null;
+        return ticket;
+      }
+
+function loadTickets() {
+    try {
+        return JSON.parse(localStorage.getItem("pm_active_tickets") || "[]") || [];
+    } catch (e) {
+        return [];
+    }
+}
+function saveTickets(tickets) {
+    localStorage.setItem("pm_active_tickets", JSON.stringify(tickets));
+}
+function getCurrentUserId() {
+    return getUserId();
+}
+function getUserId() {
+    const user = JSON.parse(localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "{}");
+    return user.id || localStorage.getItem("pm_user_id") || null;
+}
+
+async function fetchTickets() {
+    const userId = getUserId();
+    if (!userId) {
+        console.error("No user ID found");
+        return;
+    }
+
+    try {
+        const res = await fetch(`api.php?action=get_tickets&user_id=${userId}`);
+        const data = await res.json();
+        
+        if (data.status !== "success") {
+            console.error("Failed to load tickets:", data.error);
+            return;
+        }
+
+        saveTickets(data.tickets || []);
+        renderTickets(data.tickets || []);
+        maybeShowArrivalNoResponseNotice(data.recentArrivalNoResponseCancellation || null);
+    } catch (err) {
+        console.error("Fetch tickets error:", err);
+    }
+}
+
+
+
+
+
+      function removeActiveTicketFallbackIfMatches(tokenOrPnr) {
+        try {
+          const fb = JSON.parse(localStorage.getItem("activeTicket") || "null");
+          if (fb && String(fb.token || fb.pnr) === String(tokenOrPnr)) {
+            localStorage.removeItem("activeTicket");
+          }
+        } catch { }
+      }
+
+      function detectZone(slot) {
+        const n = Number(slot || 0);
+        if (n > 600) return { label: "ZONE D · LEVEL 2" };
+        if (n > 400 && n <= 600) return { label: "ZONE C · LEVEL 3" };
+        if (n > 150 && n <= 400) return { label: "ZONE B · LEVEL 1" };
+        return { label: "ZONE A · ROOFTOP" };
+      }
+
+      function getTableRate(ticket, isPrime) {
+        const vtype = String(ticket?.vtype || ticket?.vehicle_type || ticket?.type || '').toLowerCase();
+        if (vtype === 'bike' || vtype === 'motorcycle') return isPrime ? 12 : 15;
+        if (vtype === 'ev') return isPrime ? 24 : 30;
+        if (vtype === 'suv' || vtype === 'truck') return isPrime ? 28 : 36;
+        if (vtype === 'car') return isPrime ? 20 : 25;
+
+        const zone = String(ticket?.zone || ticket?.zoneLabel || detectZone(ticket?.slot).label || "").toUpperCase();
+        let baseRate = 25;
+        let primeRate = 20;
+        if (zone === 'D' || zone.includes("ZONE D") || zone.includes("LEVEL 2")) { baseRate = 36; primeRate = 28; }
+        else if (zone === 'C' || zone.includes("ZONE C") || zone.includes("LEVEL 3")) { baseRate = 30; primeRate = 24; }
+        else if (zone === 'B' || zone.includes("ZONE B") || zone.includes("LEVEL 1")) { baseRate = 25; primeRate = 20; }
+        else { baseRate = 15; primeRate = 12; }
+        
+        let rate = isPrime ? primeRate : baseRate;
+        return Math.round(rate);
+      }
+
+      function getTicketArrivalDeadlineMs(ticket) {
+        if (!ticket) return Date.now();
+        let dateStr = ticket.entry_at || ticket.created_at;
+        if (dateStr) {
+            if (typeof dateStr === 'string') dateStr = dateStr.replace('Z', '').replace(' ', 'T');
+            const parsed = new Date(dateStr).getTime();
+            if (!isNaN(parsed)) return parsed;
+        }
+        if (ticket.timestamp) return Number(ticket.timestamp);
+        return Date.now();
+      }
+
+      function getTicketParkingStartMs(ticket) {
+        if (!ticket) return NaN;
+        const confirmed = ticket.arrival_confirmed_at || "";
+        if (confirmed) {
+          const parsedConfirmed = new Date(confirmed).getTime();
+          if (!isNaN(parsedConfirmed)) return parsedConfirmed;
+        }
+        return NaN;
+      }
+
+      function getStoredBookingMs(ticket, throwOnMissing = false) {
+        const source = ticket?.booking_time || "";
+        if (source) {
+          const parsed = new Date(source).getTime();
+          if (!isNaN(parsed)) return parsed;
+        }
+        if (throwOnMissing) {
+          throw new Error("Stored booking time is missing or invalid for this ticket.");
+        }
+        return NaN;
+      }
+
+      function getTicketBookingMs(ticket) {
+        return getStoredBookingMs(ticket, false);
+      }
+
+      function getTicketBookingIstDate(ticket) {
+        const bookingMs = getTicketBookingMs(ticket);
+        if (!isFinite(bookingMs)) return null;
+        return new Date(bookingMs);
+      }
+
+      function getBookedDurationHours(ticket) {
+        return Math.max(1, Number(ticket?.duration || ticket?.duration_hours || 1));
+      }
+
+      function formatBookedDuration(ticket) {
+        const explicitLabel = String(ticket?.duration_label || "").trim();
+        if (explicitLabel) return explicitLabel;
+        
+        const h = Number(ticket?.duration_hours || 0);
+        const m = Number(ticket?.duration_minutes || 0);
+        if (h > 0 || m > 0) {
+            let parts = [];
+            if (h > 0) parts.push(`${h} Hr${h > 1 ? "s" : ""}`);
+            if (m > 0) parts.push(`${m} Min${m > 1 ? "s" : ""}`);
+            return parts.join(" ");
+        }
+        const hours = getBookedDurationHours(ticket);
+        return `${hours} ${hours === 1 ? "Hr" : "Hrs"}`;
+      }
+
+      function formatWordsFromSeconds(totalSeconds) {
+        const safe = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+        const days = Math.floor(safe / 86400);
+        const hours = Math.floor((safe % 86400) / 3600);
+        const mins = Math.floor((safe % 3600) / 60);
+        const secs = safe % 60;
+
+        const parts = [];
+        if (days > 0) parts.push(`${days} ${days === 1 ? "day" : "days"}`);
+        if (hours > 0) parts.push(`${hours} ${hours === 1 ? "hr" : "hrs"}`);
+        if (mins > 0) parts.push(`${mins} min`);
+        if (secs > 0 || parts.length === 0) parts.push(`${secs} sec`);
+        return parts.join(" ");
+      }
+
+      function getLiveParkingDurationLabel(entryMs, nowMs) {
+        const now = Number(nowMs) || Date.now();
+        const entry = Number(entryMs);
+        if (!isFinite(entry)) return "--";
+
+        if (now < entry) {
+          const secsUntil = Math.max(0, Math.ceil((entry - now) / 1000));
+          if (secsUntil <= 0) return "Starting...";
+          return `Starts in ${formatWordsFromSeconds(secsUntil)}`;
+        }
+
+        const elapsedSecs = Math.floor((now - entry) / 1000);
+        return formatWordsFromSeconds(elapsedSecs);
+      }
+
+      function formatDateTimeDisplay(ms, fallbackText) {
+        const timeMs = Number(ms);
+        if (!isFinite(timeMs)) return fallbackText || "--";
+        const value = new Date(timeMs);
+        const date = value.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+        const time = value.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+        return `${date} · ${time}`;
+      }
+
+      function getArrivedUnlockMs(ticket) {
+        const scheduledMs = getTicketArrivalDeadlineMs(ticket);
+        if (!isFinite(scheduledMs)) return NaN;
+        return scheduledMs - (10 * 60 * 1000);
+      }
+
+      function canMarkArrivedNow(ticket, nowMs = Date.now()) {
+        if (!ticket || isPendingExpiredTicket(ticket) || isArrivalConfirmed(ticket)) return false;
+        const now = Number(nowMs) || Date.now();
+        const unlockMs = getArrivedUnlockMs(ticket);
+        return isFinite(unlockMs) && now >= unlockMs;
+      }
+
+      function getTicketKey(ticket) {
+        // Stable identifier across refresh + server sync:
+        // Prefer token/pnr because it stays stable across local + server sync.
+        if (!ticket || typeof ticket !== "object") return "";
+        const tok = ticket.token || ticket.pnr;
+        if (tok) return "tok_" + String(tok);
+        if (ticket.id) return "id_" + String(ticket.id);
+
+        const slot = ticket.slot ? String(ticket.slot) : "";
+        const hasReliableEntry = !!(ticket.entry_at || ticket.created_at || ticket.timestamp);
+        if (hasReliableEntry) {
+          const entryMs = getTicketArrivalDeadlineMs(ticket);
+          const entryMin = isFinite(entryMs) ? String(Math.floor(entryMs / 60000)) : "";
+          if (slot && entryMin) return "slot_" + slot + "_" + entryMin;
+        }
+
+        if (slot) return "slot_" + slot;
+        return "";
+      }
+
+      function getTicketEndMs(ticket) {
+        const expectedExitMs = ticket?.expected_exit_at ? new Date(ticket.expected_exit_at).getTime() : NaN;
+        if (isFinite(expectedExitMs)) return expectedExitMs;
+        const entryMs = getTicketParkingStartMs(ticket);
+        if (!isFinite(entryMs)) return Number.POSITIVE_INFINITY;
+        const durationMins = (Number(ticket?.duration_hours || getBookedDurationHours(ticket)) * 60) + Number(ticket?.duration_minutes || 0);
+        return entryMs + (durationMins * 60000);
+      }
+
+      function getTicketWarnSig(ticket) {
+        const entryMs = getTicketParkingStartMs(ticket);
+        const endMs = getTicketEndMs(ticket);
+        return String(Math.floor(entryMs / 60000)) + ":" + String(Math.floor(endMs / 60000));
+      }
+
+      function getArrivalStatus(ticket) {
+        return String(ticket?.arrival_status || "pending").toLowerCase();
+      }
+
+      function isArrivalConfirmed(ticket) {
+        return getArrivalStatus(ticket) === "arrived" || !!ticket?.arrival_confirmed_at;
+      }
+
+      function getArrivalGraceExpiryMs(ticket) {
+        const raw = ticket?.arrival_grace_expires_at || "";
+        const parsed = raw ? new Date(raw).getTime() : NaN;
+        return isNaN(parsed) ? NaN : parsed;
+      }
+
+      function getArrivalPromptState(ticket, nowMs = Date.now()) {
+        const now = Number(nowMs) || Date.now();
+        if (!ticket || isPendingExpiredTicket(ticket)) {
+          return { kind: "none", label: "Arrival not required." };
+        }
+
+        const arrivalMs = getTicketArrivalDeadlineMs(ticket);
+        const status = getArrivalStatus(ticket);
+        const promptMs = ticket?.arrival_prompted_at ? new Date(ticket.arrival_prompted_at).getTime() : NaN;
+        const responseDeadlineMs = isFinite(promptMs) ? (promptMs + (60 * 1000)) : NaN;
+
+        if (isArrivalConfirmed(ticket)) {
+          return { kind: "arrived", label: "Arrived confirmed. Cancellation logic stopped." };
+        }
+        if (status === "grace") {
+          const graceMs = getArrivalGraceExpiryMs(ticket);
+          const remaining = Math.max(0, Math.ceil((graceMs - now) / 1000));
+          if (isFinite(graceMs) && remaining > 0) {
+            return { kind: "grace", label: `Grace time active: ${formatWordsFromSeconds(remaining)} left.` };
+          }
+          return { kind: "expired", label: "Grace time expired. Auto cancellation in progress." };
+        }
+        if (isFinite(responseDeadlineMs)) {
+          const remaining = Math.max(0, Math.ceil((responseDeadlineMs - now) / 1000));
+          if (remaining > 0) {
+            return { kind: "overdue", label: `Respond within ${formatWordsFromSeconds(remaining)} or the booking will be cancelled automatically.` };
+          }
+          return { kind: "expired", label: "No response received. Auto cancellation in progress." };
+        }
+        if (now < arrivalMs) {
+          return { kind: "pending", label: `Tap Arrived within ${formatWordsFromSeconds(Math.ceil((arrivalMs - now) / 1000))}.` };
+        }
+        return { kind: "overdue", label: "Arrival time reached. Respond within 1 minute or the booking will be cancelled automatically." };
+      }
+
+      function getArrivalPanelHtml(ticket) {
+        const state = getArrivalPromptState(ticket, Date.now());
+        const labelMap = {
+          arrived: "Arrived",
+          grace: "Grace Time",
+          overdue: "Arrival Check",
+          expired: "Cancelling",
+          pending: "Awaiting Arrival",
+          none: "Arrival Status"
+        };
+        return `<div class="field arrival-panel"><div class="label">${labelMap[state.kind] || "Arrival Status"}</div><div class="value js-arrival-status" data-ticket-key="${getTicketKey(ticket)}">${state.label}</div></div>`;
+      }
+
+      function mergeTicketUpdate(ticketKey, patch) {
+        const tickets = loadTickets();
+        const idx = tickets.findIndex((t) => getTicketKey(t) === String(ticketKey));
+        if (idx === -1) return null;
+        tickets[idx] = { ...tickets[idx], ...(patch || {}) };
+        saveTickets(tickets);
+
+        const fb = JSON.parse(localStorage.getItem("activeTicket") || "null");
+        if (fb && getTicketKey(fb) === getTicketKey(tickets[idx])) {
+          localStorage.setItem("activeTicket", JSON.stringify(tickets[idx]));
+          localStorage.setItem("parkmate_booking_sync", JSON.stringify(tickets[idx]));
+        }
+        return tickets[idx];
+      }
+
+      async function postTicketAction(action, payload) {
+        const res = await fetch(`api.php?action=${encodeURIComponent(action)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload || {})
+        });
+        const data = await res.json();
+        if (data.status !== "success") {
+          throw new Error(data.error || "Request failed");
+        }
+        return data;
+      }
+
+      function loadLifecycleState() {
+        try {
+          const raw = localStorage.getItem(TICKET_LIFECYCLE_STATE_KEY) || "{}";
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === "object" ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveLifecycleState(state) {
+        try {
+          localStorage.setItem(TICKET_LIFECYCLE_STATE_KEY, JSON.stringify(state || {}));
+        } catch { }
+      }
+
+      function getArrivalNoticeKey(payload) {
+        if (!payload || typeof payload !== "object") return "";
+        return String(payload.id || "") + "|" + String(payload.completed_at || "");
+      }
+
+      function maybeShowArrivalNoResponseNotice(payload) {
+        const noticeKey = getArrivalNoticeKey(payload);
+        if (!noticeKey) return;
+        const seenKey = localStorage.getItem(ARRIVAL_CANCEL_NOTICE_KEY) || "";
+        if (seenKey === noticeKey) return;
+        localStorage.setItem(ARRIVAL_CANCEL_NOTICE_KEY, noticeKey);
+        const slotText = payload?.slot ? ` for Slot #${payload.slot}` : "";
+        Swal.fire(
+          "Booking Cancelled",
+          `Your booking was cancelled due to no response within the allowed time.${slotText}`,
+          "warning"
+        );
+      }
+
+      function loadPaymentLock() {
+        try {
+          const raw = localStorage.getItem(PAYMENT_LOCK_KEY) || "null";
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === "object" ? parsed : null;
+        } catch {
+          return null;
+        }
+      }
+
+      function savePaymentLock(lock) {
+        try {
+          if (!lock) {
+            localStorage.removeItem(PAYMENT_LOCK_KEY);
+            return;
+          }
+          localStorage.setItem(PAYMENT_LOCK_KEY, JSON.stringify(lock));
+        } catch { }
+      }
+
+      function clearPaymentLock() {
+        savePaymentLock(null);
+      }
+
+      function upsertPendingExpiredTicket(ticket, lockedPayment) {
+        if (!ticket) return null;
+        const locked = lockedPayment || {};
+        const nextTicket = {
+          ...ticket,
+          status: "expired",
+          payment_required: true,
+          pending_payment: true,
+          locked_amount: Number(locked.bill ?? ticket.locked_amount ?? ticket.expired_locked_amount ?? 0),
+          locked_cashback: Number(locked.cashback ?? ticket.locked_cashback ?? ticket.expired_locked_cashback ?? 0),
+        };
+
+        const tickets = loadTickets();
+        const key = getTicketKey(ticket);
+        const idx = tickets.findIndex((t) => getTicketKey(t) === key);
+        if (idx >= 0) tickets[idx] = { ...tickets[idx], ...nextTicket };
+        else tickets.unshift(nextTicket);
+        saveTickets(tickets);
+        return nextTicket;
+      }
+
+      async function postJson(url, payload) {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload || {}),
+        });
+
+        const text = await res.text();
+        let data = {};
+        try { data = JSON.parse(text); } catch { }
+        if (data && (data.status === "success" || data.already_closed || data.already_processed)) return data;
+        if (!res.ok) throw new Error(data.error || "Request failed");
+        if (data && data.error) throw new Error(data.error);
+        return data;
+      }
+
+      async function tryExtendTicketOnServer(ticket, newDurationHours) {
+        const userId = getCurrentUserId();
+        const ticketId = Number(ticket?.id || 0);
+        const ticketToken = String(ticket?.token || ticket?.pnr || "");
+
+        if (!userId) return { skipped: true };
+        if (!ticketId && !ticketToken) return { skipped: true };
+
+        return await postJson("api.php?action=extend_ticket", {
+          user_id: userId,
+          ticket_id: ticketId || undefined,
+          ticket_token: ticketToken || undefined,
+          duration_hours: Math.max(1, parseInt(newDurationHours, 10)),
+        });
+      }
+
+      async function tryExpireTicketOnServer(ticket) {
+        const userId = getCurrentUserId();
+        const ticketId = Number(ticket?.id || 0);
+        const ticketToken = String(ticket?.token || ticket?.pnr || "");
+
+        if (!userId) return { skipped: true };
+        if (!ticketId && !ticketToken) return { skipped: true };
+
+        return await postJson("api.php?action=expire_ticket", {
+          user_id: userId,
+          ticket_id: ticketId || undefined,
+          ticket_token: ticketToken || undefined,
+        });
+      }
+
+      function applyDurationUpdate(ticket, newDurationHours, expectedExitAt) {
+        const dur = Math.max(1, Number(newDurationHours) || 1);
+        ticket.duration = dur;
+        ticket.duration_hours = dur;
+        
+        const m = Number(ticket.duration_minutes || 0);
+        let parts = [];
+        if (dur > 0) parts.push(`${dur} Hr${dur > 1 ? "s" : ""}`);
+        if (m > 0) parts.push(`${m} Min${m > 1 ? "s" : ""}`);
+        ticket.duration_label = parts.length > 0 ? parts.join(" ") : `${dur} Hr${dur > 1 ? "s" : ""}`;
+        
+        if (expectedExitAt) ticket.expected_exit_at = expectedExitAt;
+        return ticket;
+      }
+
+      async function extendTicketDuration(ticketKey, newDurationHours) {
+        const tickets = loadTickets();
+        const idx = tickets.findIndex(t => getTicketKey(t) === String(ticketKey));
+        if (idx < 0) throw new Error("Ticket not found");
+
+        const ticket = tickets[idx];
+        const entryMs = getTicketParkingStartMs(ticket);
+        const currentEndMs = getTicketEndMs(ticket);
+        const now = Date.now();
+        if (now >= currentEndMs) throw new Error("Ticket already expired");
+        if (!isFinite(entryMs) || now < entryMs) throw new Error("Parking starts after you tap Arrived.");
+
+        const currentMins = Number(ticket.duration_minutes || 0);
+        const currentTotalMins = (getBookedDurationHours(ticket) * 60) + currentMins;
+        const nextDur = Math.max(1, Number(newDurationHours) || 0);
+        if (!isFinite(nextDur) || (nextDur * 60 + currentMins) <= currentTotalMins) throw new Error("Enter a duration greater than the current duration");
+
+        const needsServer = !!getCurrentUserId() && (!!ticket.id || !!ticket.token || !!ticket.pnr);
+        if (needsServer) {
+          const data = await tryExtendTicketOnServer(ticket, nextDur);
+          tickets[idx] = applyDurationUpdate(ticket, nextDur, data?.expected_exit_at || null);
+        } else {
+          tickets[idx] = applyDurationUpdate(ticket, nextDur, null);
+        }
+
+        saveTickets(tickets);
+        const fb = JSON.parse(localStorage.getItem("activeTicket") || "null");
+        if (fb && getTicketKey(fb) === getTicketKey(ticket)) {
+            localStorage.setItem("activeTicket", JSON.stringify(tickets[idx]));
+            localStorage.setItem("parkmate_booking_sync", JSON.stringify(tickets[idx]));
+        }
+        renderTickets(tickets);
+      }
+
+      async function expireTickets(expired) {
+        if (!Array.isArray(expired) || expired.length === 0) return;
+
+        const toExpireKeys = new Set(expired.map(x => String(x.key)));
+        const toExpireSlots = new Set(expired.map(x => Number(x.ticket?.slot)).filter(n => isFinite(n)));
+        const serverLocks = {};
+
+        for (const item of expired) {
+          try {
+            const data = await tryExpireTicketOnServer(item.ticket);
+            serverLocks[item.key] = data || {};
+          } catch { }
+        }
+
+        let tickets = loadTickets();
+        tickets = tickets.map((t) => {
+          const key = getTicketKey(t);
+          if (!toExpireKeys.has(key)) return t;
+          const lockData = serverLocks[key] || {};
+          return {
+            ...t,
+            status: "expired",
+            payment_required: true,
+            pending_payment: true,
+            locked_amount: Number(lockData.locked_amount || 0),
+            locked_cashback: Number(lockData.locked_cashback || 0),
+          };
+        });
+        saveTickets(tickets);
+
+        let bookedSlots = [];
+        try { bookedSlots = JSON.parse(localStorage.getItem("bookedSlots") || "[]") || []; } catch { }
+        bookedSlots = (Array.isArray(bookedSlots) ? bookedSlots : []).map(Number).filter(slot => !toExpireSlots.has(Number(slot)));
+        localStorage.setItem("bookedSlots", JSON.stringify(bookedSlots));
+
+        renderTickets(tickets);
+        return serverLocks;
+      }
+
+      let lifecycleCheckInFlight = false;
+      let lifecycleModalOpen = false;
+      let lifecycleLastCheckMs = 0;
+
+      async function handleArrivalPrompt(ticket) {
+        const userId = getCurrentUserId();
+        if (!ticket?.id || !userId) return;
+        const key = getTicketKey(ticket);
+
+        lifecycleModalOpen = true;
+        try {
+          const existingPromptMs = ticket?.arrival_prompted_at ? new Date(ticket.arrival_prompted_at).getTime() : NaN;
+          const shouldStartServerWindow = !isFinite(existingPromptMs);
+          const startData = shouldStartServerWindow
+            ? await postTicketAction("start_arrival_response_window", {
+                user_id: userId,
+                ticket_id: ticket.id
+              })
+            : {
+                status: "success",
+                arrival_prompted_at: ticket.arrival_prompted_at,
+                arrival_response_deadline_at: new Date(existingPromptMs + (60 * 1000)).toISOString()
+              };
+          if (startData.already_arrived) {
+            await fetchTickets();
+            return;
+          }
+          const promptedAtIso = startData.arrival_prompted_at || new Date().toISOString();
+          const responseDeadlineIso = startData.arrival_response_deadline_at || new Date(Date.now() + (60 * 1000)).toISOString();
+          mergeTicketUpdate(key, {
+            arrival_status: "pending",
+            arrival_prompted_at: promptedAtIso,
+            arrival_grace_expires_at: null
+          });
+          renderTickets(loadTickets());
+
+          let countdownInterval;
+          const res = await Swal.fire({
+            title: "Are you arriving at the parking location?",
+            html: `Respond within <b id="arrivalResponseCountdown" style="color:#ef4444;">1 min 0 sec</b> or the booking will be cancelled automatically.`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes",
+            cancelButtonText: "No",
+            confirmButtonColor: "#10b981",
+            cancelButtonColor: "#ef4444",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            timer: Math.max(1, new Date(responseDeadlineIso).getTime() - Date.now()),
+            didOpen: () => {
+              const updateCountdown = () => {
+                const countdownEl = document.getElementById("arrivalResponseCountdown");
+                if (!countdownEl) return;
+                const remainingMs = Math.max(0, new Date(responseDeadlineIso).getTime() - Date.now());
+                const totalSec = Math.ceil(remainingMs / 1000);
+                const mins = Math.floor(totalSec / 60);
+                const secs = totalSec % 60;
+                countdownEl.textContent = `${mins} min ${secs} sec`;
+              };
+              updateCountdown();
+              countdownInterval = setInterval(updateCountdown, 1000);
+            },
+            willClose: () => {
+              if (countdownInterval) clearInterval(countdownInterval);
+            }
+          });
+
+          if (res.isConfirmed) {
+            const data = await postTicketAction("grant_arrival_grace", {
+              user_id: userId,
+              ticket_id: ticket.id
+            });
+            mergeTicketUpdate(key, {
+              arrival_status: "grace",
+              arrival_grace_expires_at: data.arrival_grace_expires_at || new Date(Date.now() + (15 * 60 * 1000)).toISOString(),
+              arrival_prompted_at: promptedAtIso
+            });
+            renderTickets(loadTickets());
+            await Swal.fire("Grace Time", data.message || "You have been given 15 minutes grace time.", "success");
+            fetchTickets();
+            return;
+          }
+
+          if (res.isDismissed && !res.isConfirmed) {
+            const currentTicket = loadTickets().find((item) => getTicketKey(item) === key) || ticket;
+            const currentPromptMs = currentTicket?.arrival_prompted_at ? new Date(currentTicket.arrival_prompted_at).getTime() : NaN;
+            if (isFinite(currentPromptMs) && (Date.now() - currentPromptMs) >= 60000) {
+              try { await fetchTickets(); } catch { }
+              return;
+            }
+          }
+
+          await cancelForArrival(
+            ticket,
+            "arrival_declined",
+            "Booking cancelled. Cancellation charges have been applied."
+          );
+        } finally {
+          lifecycleModalOpen = false;
+        }
+      }
+
+      async function runTicketLifecycleChecks(nowMs) {
+        const now = Number(nowMs) || Date.now();
+        if (lifecycleCheckInFlight || lifecycleModalOpen) return;
+        if (now - lifecycleLastCheckMs < 5000) return;
+        lifecycleLastCheckMs = now;
+
+        const tickets = loadTickets();
+        if (!tickets.length) return;
+
+        lifecycleCheckInFlight = true;
+        try {
+          const state = loadLifecycleState();
+
+          const expired = [];
+          let expiringSoon = null;
+          let arrivalPromptTicket = null;
+          let unansweredArrivalTicket = null;
+
+          for (const ticket of tickets) {
+            const key = getTicketKey(ticket);
+            if (!key) continue;
+            if (isPendingExpiredTicket(ticket)) continue;
+
+            const arrivalStatus = getArrivalStatus(ticket);
+            const arrivalMs = getTicketArrivalDeadlineMs(ticket);
+            const promptedAtMs = ticket?.arrival_prompted_at ? new Date(ticket.arrival_prompted_at).getTime() : NaN;
+            if (!isArrivalConfirmed(ticket)) {
+              if (arrivalStatus === "pending" && isFinite(promptedAtMs) && now >= (promptedAtMs + (60 * 1000))) {
+                if (!unansweredArrivalTicket) unansweredArrivalTicket = { ticket, key };
+                continue;
+              }
+              const shouldShowPrompt = arrivalStatus === "pending" && now >= arrivalMs && (
+                !ticket?.arrival_prompted_at ||
+                (isFinite(promptedAtMs) && now < (promptedAtMs + (60 * 1000)))
+              );
+              if (shouldShowPrompt) {
+                if (!arrivalPromptTicket || arrivalMs < getTicketArrivalDeadlineMs(arrivalPromptTicket.ticket)) {
+                  arrivalPromptTicket = { ticket, key };
+                }
+                continue;
+              }
+            }
+
+            // Ticket warning/expiry lifecycle should begin only after the user
+            // has explicitly marked the booking as arrived.
+            if (!isArrivalConfirmed(ticket)) continue;
+
+            const entryMs = getTicketParkingStartMs(ticket);
+            if (!isFinite(entryMs) || now < entryMs) continue;
+
+            const endMs = getTicketEndMs(ticket);
+            const bookedDurationMinutes = Math.max(
+              1,
+              (Math.max(0, Number(ticket?.duration_hours || ticket?.duration || 0)) * 60) +
+              Math.max(0, Number(ticket?.duration_minutes || 0))
+            );
+            const timeInLiveDuration = now - entryMs;
+
+            // Don't show warnings until at least 1 minute of live duration has completed
+            if (timeInLiveDuration < 60 * 1000) {
+              continue;
+            }
+
+            const warnSig = getTicketWarnSig(ticket);
+
+            if (now >= endMs) {
+              if ((state[key]?.expiredSig || "") === warnSig) continue;
+              expired.push({ ticket, key, endMs });
+              continue;
+            }
+
+            let effectiveWarningMs = 15 * 60 * 1000; // Default 15 minutes
+            if (bookedDurationMinutes === 2) {
+              effectiveWarningMs = 1 * 60 * 1000; // For 2-minute bookings, warn when 1 minute remains
+            } else if (bookedDurationMinutes <= 5) {
+              effectiveWarningMs = 1 * 60 * 1000; // Keep short bookings on a 1-minute warning
+            }
+
+            if (now >= (endMs - effectiveWarningMs)) {
+              if ((state[key]?.warnedSig || "") === warnSig) continue;
+              if (!expiringSoon || endMs < expiringSoon.endMs) {
+                expiringSoon = { ticket, key, endMs, warnSig };
+              }
+            }
+            }
+
+          if (unansweredArrivalTicket) {
+            lifecycleModalOpen = true;
+            try {
+              await cancelForArrival(
+                unansweredArrivalTicket.ticket,
+                "arrival_no_response",
+                "Booking cancelled due to no response. Cancellation charges have been applied."
+              );
+            } finally {
+              lifecycleModalOpen = false;
+            }
+            return;
+          }
+
+          if (arrivalPromptTicket) {
+            await handleArrivalPrompt(arrivalPromptTicket.ticket);
+            return;
+          }
+
+          if (expired.length) {
+            for (const it of expired) {
+              const sig = getTicketWarnSig(it.ticket);
+              state[it.key] = { ...(state[it.key] || {}), expiredSig: sig };
+            }
+            saveLifecycleState(state);
+
+            lifecycleModalOpen = true;
+            const serverLocks = await expireTickets(expired);
+
+            // Expiry should not auto-open payment. Mark the ticket as pending and wait for user action.
+            const firstExpired = expired[0];
+            const lockData = serverLocks?.[firstExpired.key] || {};
+            const locked = {
+              bill: Number(lockData.locked_amount || 0),
+              cashback: Number(lockData.locked_cashback || 0),
+            };
+            locked.payable = Math.max(0, locked.bill - locked.cashback);
+            const pendingTicket = upsertPendingExpiredTicket(firstExpired.ticket, locked) || firstExpired.ticket;
+            renderTickets(loadTickets());
+            const expiredPrompt = await Swal.fire({
+              title: "Time Expired",
+              text: `Parking time expired for ${pendingTicket?.slot ? `Slot #${pendingTicket.slot}` : "this ticket"}. Click OK to continue to payment now.`,
+              icon: "warning",
+              confirmButtonText: "OK",
+              allowOutsideClick: false,
+              allowEscapeKey: false
+            });
+            if (expiredPrompt.isConfirmed) {
+              openExitPayForTicket(pendingTicket, "pay_ticket", locked);
+            }
+
+            lifecycleModalOpen = false;
+            return;
+          }
+
+          if (expiringSoon) {
+            const remainingSec = Math.max(0, Math.ceil((expiringSoon.endMs - now) / 1000));
+            state[expiringSoon.key] = { ...(state[expiringSoon.key] || {}), warnedSig: expiringSoon.warnSig };
+            saveLifecycleState(state);
+
+            lifecycleModalOpen = true;
+            const slotLabel = expiringSoon.ticket?.slot ? ("Slot #" + expiringSoon.ticket.slot) : "Your slot";
+            let expireInterval;
+            const res = await Swal.fire({
+              title: "Ticket Expiring Soon",
+              html: `${slotLabel} is expiring soon.<br>Ticket ends in: <b id="swalCountdown" style="color: #ef4444;">--:--</b><br><br>Do you want to extend?`,
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonText: "Extend",
+              cancelButtonText: "Ignore",
+              confirmButtonColor: "#f59e0b",
+              cancelButtonColor: "#6b7280",
+              didOpen: () => {
+                const updateTimer = () => {
+                  const timeLeft = expiringSoon.endMs - Date.now();
+                  const el = document.getElementById('swalCountdown');
+                  if (!el) return;
+                  if (timeLeft <= 0) {
+                    el.textContent = "0 min 0 sec";
+                    clearInterval(expireInterval);
+                  } else {
+                    const m = Math.floor(timeLeft / 60000);
+                    const s = Math.floor((timeLeft % 60000) / 1000);
+                    el.textContent = `${m} min ${s} sec`;
+                  }
+                };
+                updateTimer();
+                expireInterval = setInterval(updateTimer, 1000);
+              },
+              willClose: () => {
+                if (expireInterval) clearInterval(expireInterval);
+              }
+            });
+
+            if (res.isConfirmed) {
+              const currentDurHours = getBookedDurationHours(expiringSoon.ticket);
+              const currentDurLabel = formatBookedDuration(expiringSoon.ticket);
+              const res2 = await Swal.fire({
+                title: "Extend Duration",
+                text: "Enter new total duration in hours (current: " + currentDurLabel + ")",
+                icon: "info",
+                input: "number",
+                inputLabel: "New Duration (hours)",
+                inputPlaceholder: String(currentDurHours + 1),
+                showCancelButton: true,
+                confirmButtonText: "Update",
+                confirmButtonColor: "#3b82f6",
+                cancelButtonColor: "#6b7280",
+                inputValidator: (value) => {
+                  const v = Number(value);
+                  if (!value || !isFinite(v)) return "Enter a valid number";
+                  const currentMins = Number(expiringSoon.ticket.duration_minutes || 0);
+                  const currentTotalMins = (getBookedDurationHours(expiringSoon.ticket) * 60) + currentMins;
+                  if ((v * 60) + currentMins <= currentTotalMins) return "New duration must be greater than current duration";
+                  return null;
+                }
+              });
+
+              if (res2.isConfirmed) {
+                try {
+                  await extendTicketDuration(expiringSoon.key, res2.value);
+                  const s2 = loadLifecycleState();
+                  if (s2[expiringSoon.key]) delete s2[expiringSoon.key].warnedSig;
+                  saveLifecycleState(s2);
+
+                  await Swal.fire("Extended", "Your ticket duration has been updated.", "success");
+                } catch (e) {
+                  await Swal.fire("Unable to Extend", e?.message || "Please try again.", "error");
+                }
+              }
+            }
+
+            // If user clicks Ignore: do nothing now (parking continues normally).
+
+            lifecycleModalOpen = false;
+          }
+        } finally {
+          lifecycleCheckInFlight = false;
+        }
+      }
+
+      function formatParkInDateTime(ticket) {
+        const entryMs = getTicketParkingStartMs(ticket);
+        if (!isFinite(entryMs)) {
+          return "Will start when you tap Arrived";
+        }
+        const entryTimeVal = new Date(entryMs);
+        const date = entryTimeVal.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+        const time = entryTimeVal.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+        return `${date} · ${time}`;
+      }
+
+      function formatBookingDateTime(ticket) {
+        const bookingDate = getTicketBookingIstDate(ticket);
+        if (!(bookingDate instanceof Date) || isNaN(bookingDate.getTime())) {
+          return "Booking time unavailable";
+        }
+        const date = bookingDate.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+        const time = bookingDate.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+        return `${date} · ${time}`;
+      }
+
+      function formatScheduledParkInDateTime(ticket) {
+        return formatDateTimeDisplay(
+          getTicketArrivalDeadlineMs(ticket),
+          "Parking time unavailable"
+        );
+      }
+
+      function formatArrivedDateTime(ticket) {
+        return formatDateTimeDisplay(
+          getTicketParkingStartMs(ticket),
+          "Will show after you tap Arrived"
+        );
+      }
+
+      function estimateBill(ticket, hourlyRate) {
+        const entryMs = getTicketParkingStartMs(ticket);
+        if (!isFinite(entryMs)) return 0;
+        const elapsedMs = Math.max(0, Date.now() - entryMs);
+        const totalMins = Math.floor(elapsedMs / 60000);
+        const elapsedHours = elapsedMs / 3600000;
+        if (totalMins < 1) return Math.ceil(hourlyRate / 60);
+        if (elapsedHours < 1) return Math.ceil(totalMins * (hourlyRate / 60));
+        return Math.round(hourlyRate * elapsedHours);
+      }
+
+      function getCancellationFee(bookingMs, cancellationMs) {
+        const elapsedHrs = Math.max(0, (Number(cancellationMs) - Number(bookingMs)) / 3600000);
+        if (elapsedHrs <= 2) return 10;
+        if (elapsedHrs <= 4) return 25;
+        return 75;
+      }
+
+      function selectTicket(token) {
+        localStorage.setItem(ACTIVE_TICKET_SELECTED_KEY, String(token || ""));
+      }
+
+      function openExitPayForTicket(ticket, action, lockedPayment) {
+        activeExitTicket = ticket;
+        pendingExitAction = action === "pay_ticket" ? "pay_ticket" : "exit_ticket";
+        if (!activeExitTicket) return;
+        setMandatoryPaymentMode(pendingExitAction === "pay_ticket");
+
+        const isPrime = getPrimeState().active;
+        const paymentPending = isPendingExpiredTicket(ticket);
+        const entryMs = getTicketParkingStartMs(activeExitTicket);
+        const billingNowMs = paymentPending ? getTicketEndMs(activeExitTicket) : Date.now();
+        if (!isFinite(entryMs)) {
+          Swal.fire("Arrival Required", "Tap Arrived to start live parking duration and billing.", "info");
+          return;
+        }
+        let elapsedMs = Math.max(0, billingNowMs - entryMs);
+        if (billingNowMs < entryMs) elapsedMs = 0;
+        const totalMins = Math.floor(elapsedMs / 60000);
+        const elapsedHrs = elapsedMs / 3600000;
+        
+        const hourlyRate = getTableRate(activeExitTicket, isPrime);
+        const perMinRate = hourlyRate / 60;
+        
+        let bill;
+        if (lockedPayment && isFinite(Number(lockedPayment.bill))) {
+          bill = Number(lockedPayment.bill);
+        } else if (totalMins < 1) bill = Math.ceil(hourlyRate / 60);
+        else if (elapsedHrs < 1) bill = Math.ceil(totalMins * perMinRate);
+        else bill = Math.round(hourlyRate * elapsedHrs);
+        
+        const cashback = lockedPayment && isFinite(Number(lockedPayment.cashback))
+          ? Number(lockedPayment.cashback)
+          : (isPrime ? Math.floor(bill * 0.2) : 0);
+        const payable = lockedPayment && isFinite(Number(lockedPayment.payable))
+          ? Number(lockedPayment.payable)
+          : Math.max(0, bill - cashback);
+        const h = Math.floor(totalMins / 60);
+        const m = totalMins % 60;
+        const durLabel = h > 0 ? h + "h " + m + "m" : m + " mins";
+
+        pendingExitData = { bill, cashback, payable };
+        if (pendingExitAction === "pay_ticket") {
+          activeExitTicket = upsertPendingExpiredTicket(activeExitTicket, pendingExitData) || activeExitTicket;
+          savePaymentLock({
+            ticket: activeExitTicket,
+            bill,
+            cashback,
+            payable,
+            lockedAt: Date.now()
+          });
+        }
+
+        document.getElementById("epToken").textContent = activeExitTicket.token || activeExitTicket.pnr || "N/A";
+        document.getElementById("epDuration").textContent = durLabel;
+        
+        const standardRate = getTableRate(activeExitTicket, false);
+        let rateHtml = `₹${standardRate}/hr`;
+        if (isPrime) {
+           rateHtml = `<span style="text-decoration:line-through;color:#888;font-size:0.75rem;">₹${standardRate}/hr</span> <span style="color:var(--gold);">₹${hourlyRate}/hr</span>`;
+        }
+        document.getElementById("epRate").innerHTML = rateHtml + ` <span style="color:rgba(255,255,255,0.4);font-size:0.75rem;">· ₹${perMinRate.toFixed(2)}/min</span>`;
+        
+        document.getElementById("epBillAmt").textContent = "₹" + bill;
+
+        const cbRow = document.getElementById("epCashbackRow");
+        if (isPrime) {
+          cbRow.style.display = "flex";
+          document.getElementById("epCashbackVal").textContent = "+₹" + cashback;
+        } else {
+          cbRow.style.display = "none";
+        }
+
+        let currentUser = JSON.parse(localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "null");
+        const balance = currentUser ? (parseFloat(currentUser.balance) || 0) : 0;
+        
+        const walBox = document.getElementById("epWalletBox");
+        document.getElementById("epWalletBal").textContent = "₹" + balance.toFixed(2);
+        
+        const payBtn = document.getElementById("epPayBtn");
+        const addBtn = document.getElementById("epAddBtn");
+
+        if (balance >= payable) {
+          walBox.className = "ep-wallet suff";
+          document.getElementById("epWalletStat").innerHTML = '<i class="fas fa-check-circle" style="color:#10b981;"></i> <span style="color:#10b981;">Sufficient</span>';
+          payBtn.style.display = "flex";
+          addBtn.style.display = "none";
+          payBtn.innerHTML = `<i class="fas fa-check-circle"></i> Pay ₹${payable}`;
+        } else {
+          walBox.className = "ep-wallet insuff";
+          document.getElementById("epWalletStat").innerHTML = '<i class="fas fa-times-circle" style="color:#ef4444;"></i> <span style="color:#ef4444;">Low Balance</span>';
+          payBtn.style.display = "none";
+          addBtn.style.display = "flex";
+          const deficit = payable - balance;
+          addBtn.innerHTML = `<i class="fas fa-plus-circle"></i> Add ₹${deficit.toFixed(2)}`;
+          addBtn.onclick = () => {
+            if (!mandatoryPaymentActive) closeExitPayModal();
+            openWalletTopUp(deficit);
+          };
+        }
+
+        const epModal = document.getElementById("exitPayModal");
+        if(epModal) epModal.classList.add("open");
+      }
+
+      function goToExit(token) {
+        selectTicket(token);
+        
+        const tickets = loadTickets();
+        const t = tickets.find(t => String(t.token||t.pnr) === String(token));
+        if (!t) return;
+        openExitPayForTicket(t, "exit_ticket");
+      }
+
+      function restoreLockedPaymentIfAny(serverTicket) {
+        const lock = loadPaymentLock();
+        const sourceTicket = serverTicket || lock?.ticket || null;
+        if (!sourceTicket) return false;
+
+        const bill = Number(serverTicket?.locked_amount ?? lock?.bill ?? 0);
+        const cashback = Number(serverTicket?.locked_cashback ?? lock?.cashback ?? 0);
+        const payable = Math.max(0, Number(serverTicket?.locked_amount ?? lock?.bill ?? 0) - Number(serverTicket?.locked_cashback ?? lock?.cashback ?? 0));
+
+        const pendingTicket = upsertPendingExpiredTicket(sourceTicket, { bill, cashback, payable }) || sourceTicket;
+        const currentTickets = loadTickets();
+        if (currentTickets.length === 0 || !currentTickets.some((t) => getTicketKey(t) === getTicketKey(pendingTicket))) {
+          saveTickets([pendingTicket, ...currentTickets]);
+        }
+        renderTickets(loadTickets());
+        openExitPayForTicket(pendingTicket, "pay_ticket", { bill, cashback, payable });
+        return true;
+      }
+
+      function openWalletTopUp(presetAmount) {
+        let currentUser = JSON.parse(localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "null");
+        if (!currentUser) return;
+        const ps = getPrimeState();
+        
+        document.getElementById('wmBal').textContent = "₹" + (parseFloat(currentUser.balance) || 0).toFixed(2);
+        
+        const recNoteWrap = document.getElementById('wmRecNoteWrap');
+        const recNote = document.getElementById('wmRecNote');
+        if (presetAmount > 0) {
+          document.getElementById('wmAddAmount').value = presetAmount.toFixed(2);
+        } else {
+          recNoteWrap.style.display = "none";
+          document.getElementById('wmAddAmount').value = "";
+        }
+        
+        document.getElementById('wmPrimeNote').style.display = ps.active ? 'block' : 'none';
+        
+        document.getElementById('walletModal').classList.add('open');
+        applyMandatoryPaymentUi();
+      }
+
+      async function queueNextExpiredPaymentOrRedirect(currentUser) {
+        document.querySelectorAll('.glass-swal-overlay').forEach(el => el.remove());
+        const userId = currentUser?.id || localStorage.getItem("pm_user_id");
+        if (!userId) {
+          window.location.href = "index.html?v=20260404.5";
+          return;
+        }
+
+        try {
+          const res = await fetch(`api.php?action=get_user&id=${encodeURIComponent(userId)}`);
+          const data = await res.json();
+          if (data?.unpaidExpiredTicket) {
+            restoreLockedPaymentIfAny(data.unpaidExpiredTicket);
+            await Swal.fire(
+              "Next Expired Ticket",
+              `Another expired ticket is pending${data?.unpaidExpiredTicket?.slot ? ` on Slot #${data.unpaidExpiredTicket.slot}` : ""}. Click Complete Payment for the next ticket to continue.`,
+              "warning"
+            );
+            return;
+          }
+        } catch { }
+
+        localStorage.setItem(PAYMENT_SUCCESS_REDIRECT_KEY, JSON.stringify({
+          title: "All Expired Tickets Paid",
+          message: "All expired tickets were paid successfully. You can now continue with normal booking flow.",
+          at: Date.now()
+        }));
+        window.location.href = "index.html?v=20260404.5";
+      }
+
+      function closeWalletModal(forceClose) {
+        if (mandatoryPaymentActive && !forceClose) {
+          Swal.fire("Payment Pending", `Ticket expired${activeExitTicket?.slot ? ` for Slot #${activeExitTicket.slot}` : ""}. Complete the pending payment to continue.`, "warning");
+          return;
+        }
+        document.getElementById('walletModal').classList.remove('open');
+      }
+
+      function setWmAmount(amt) {
+        document.getElementById('wmAddAmount').value = amt;
+      }
+
+      async function processWalletAdd() {
+        let currentUser = JSON.parse(localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "null");
+        if (!currentUser) return;
+
+        const amtInput = document.getElementById('wmAddAmount').value;
+        const amt = parseFloat(amtInput);
+        if (isNaN(amt) || amt <= 0) {
+          Swal.fire("Invalid Amount", "Enter a valid amount to add.", "error");
+          return;
+        }
+        
+        const btn = document.getElementById('wmSubmitBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        btn.disabled = true;
+        
+        try {
+          const res = await fetch("api.php?action=update_wallet", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: currentUser.id,
+              amount: amt,
+            }),
+          });
+          const data = await res.json();
+          if (data.status === "success") {
+            currentUser.balance = parseFloat(currentUser.balance || 0) + amt;
+            localStorage.setItem("pmCurrentUser", JSON.stringify(currentUser));
+            localStorage.setItem("currentUser", JSON.stringify(currentUser));
+            if (window.confetti) {
+              confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+            }
+            closeWalletModal(true);
+            Swal.fire("Success", "₹" + amt.toFixed(2) + " added to wallet!", "success").then(() => {
+              if (typeof window.onWalletSuccessOnce === 'function') {
+                const callback = window.onWalletSuccessOnce;
+                window.onWalletSuccessOnce = null;
+                callback();
+                return;
+              }
+              if (activeExitTicket) {
+                if (pendingExitAction === "pay_ticket") {
+                  openExitPayForTicket(activeExitTicket, "pay_ticket", pendingExitData);
+                } else {
+                  goToExit(activeExitTicket.token || activeExitTicket.pnr);
+                }
+              }
+            });
+          } else {
+            Swal.fire("Error", data.error || "Failed to add funds", "error");
+          }
+        } catch (e) {
+          Swal.fire("Error", "Network error. Please try again.", "error");
+        } finally {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      }
+
+      function closeExitPayModal() {
+        if (mandatoryPaymentActive) {
+          Swal.fire("Payment Pending", `Ticket expired${activeExitTicket?.slot ? ` for Slot #${activeExitTicket.slot}` : ""}. Complete the pending payment to remove this ticket.`, "warning");
+          return;
+        }
+        const epModal = document.getElementById("exitPayModal");
+        if(epModal) epModal.classList.remove("open");
+      }
+
+      async function confirmExitPay() {
+        let currentUser = JSON.parse(localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "null");
+        if (!currentUser || !activeExitTicket) return;
+        if (exitRequestInFlight) return;
+
+        const epModal = document.getElementById("exitPayModal");
+        if (epModal) epModal.classList.remove("open");
+        const { bill, cashback, payable } = pendingExitData;
+        
+        if (currentUser.balance >= payable) {
+          try {
+            exitRequestInFlight = true;
+            const action = pendingExitAction === "pay_ticket" ? "pay_ticket" : "exit_ticket";
+            const res = await fetch("api.php?action=" + action, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                user_id: currentUser.id,
+                ticket_id: activeExitTicket.id,
+                ticket_token: activeExitTicket.token || activeExitTicket.pnr || "",
+                amount: bill,
+                cashback: cashback,
+              }),
+            });
+            
+            const text = await res.text();
+            let data = {};
+            try { data = JSON.parse(text); } catch(e) { throw new Error("Invalid API response"); }
+            
+            if (data.status === "success" || data.already_processed) {
+              if (pendingExitAction === "pay_ticket") {
+                setMandatoryPaymentMode(false);
+                clearPaymentLock();
+              }
+              currentUser.balance = parseFloat(data.new_balance ?? Math.max(0, currentUser.balance - payable));
+              localStorage.setItem("currentUser", JSON.stringify(currentUser));
+              localStorage.setItem("pmCurrentUser", JSON.stringify(currentUser));
+              
+              let tickets = loadTickets();
+              tickets = tickets.filter(t => String(t.token||t.pnr) !== String(activeExitTicket.token||activeExitTicket.pnr));
+              localStorage.setItem(ACTIVE_TICKETS_KEY, JSON.stringify(tickets));
+              const userId = currentUser.id || localStorage.getItem("pm_user_id");
+              if (userId) {
+                  localStorage.setItem(`pm_active_tickets_${userId}`, JSON.stringify(tickets));
+                  localStorage.removeItem(`pm_active_ticket_${userId}`);
+                  localStorage.removeItem(`pm_active_ticket_selected_${userId}`);
+              }
+              if (tickets[0]?.token || tickets[0]?.pnr) {
+                  localStorage.setItem(ACTIVE_TICKET_SELECTED_KEY, String(tickets[0].token || tickets[0].pnr));
+              } else {
+                  localStorage.removeItem(ACTIVE_TICKET_SELECTED_KEY);
+              }
+              
+              const fb = JSON.parse(localStorage.getItem("activeTicket") || "null");
+              if (fb && String(fb.token||fb.pnr) === String(activeExitTicket.token||activeExitTicket.pnr)) {
+                  localStorage.removeItem("activeTicket");
+              }
+              if (tickets[0]) {
+                  localStorage.setItem("activeTicket", JSON.stringify(tickets[0]));
+              } else {
+                  localStorage.removeItem("activeTicket");
+              }
+              localStorage.removeItem("parkmate_booking_sync");
+              localStorage.removeItem("pm_ticket_banner_snapshot");
+              
+              let bookedSlots = JSON.parse(localStorage.getItem("bookedSlots") || "[]") || [];
+              bookedSlots = bookedSlots.map(Number).filter(slot => slot !== Number(activeExitTicket.slot));
+              localStorage.setItem("bookedSlots", JSON.stringify(bookedSlots));
+              
+              if(window.confetti) {
+                confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+              }
+              
+              if (pendingExitAction === "pay_ticket") {
+                Swal.fire(
+                  "Ticket Expired",
+                  "Parking duration completed. Ticket has expired. Payment received. Slot is now free.",
+                  "success"
+                ).then(() => queueNextExpiredPaymentOrRedirect(currentUser));
+              } else {
+              Swal.fire(
+                data.already_processed ? "Payment Already Completed" : "Payment Successful! 🎉",
+                data.already_processed ? "Your booking was already closed." : `₹${(parseFloat(data.amount_paid) || payable).toFixed(2)} deducted. New wallet balance: ₹${currentUser.balance.toFixed(2)}.`,
+                "success"
+              ).then(() => { window.location.reload(); });
+              }
+            } else {
+               throw new Error(data.error || "Payment failed");
+            }
+          } catch (e) {
+            const msg = e?.message || "Unable to complete payment.";
+            if (/already closed|no active ticket/i.test(msg)) {
+              clearPaymentLock();
+              setMandatoryPaymentMode(false);
+              let tickets = loadTickets();
+              tickets = tickets.filter(t => String(t.token||t.pnr) !== String(activeExitTicket.token||activeExitTicket.pnr));
+              localStorage.setItem(ACTIVE_TICKETS_KEY, JSON.stringify(tickets));
+              Swal.fire("Already Completed", "This booking was already closed.", "info").then(() => window.location.reload());
+            } else {
+              Swal.fire("Payment failed", msg, "error");
+            }
+          } finally {
+            exitRequestInFlight = false;
+          }
+        }
+      }
+
+      function openPhoto(token) {
+        selectTicket(token);
+        
+        const tickets = loadTickets();
+        const activeExitTicket = tickets.find(t => String(t.token||t.pnr) === String(token));
+        if (activeExitTicket) {
+            const isPrime = getPrimeState().active;
+            const hourlyRate = getTableRate(activeExitTicket, isPrime);
+            const standardRate = getTableRate(activeExitTicket, false);
+            const zoneLabel = activeExitTicket.zoneLabel || activeExitTicket.zone || detectZone(activeExitTicket.slot).label;
+            const entryMs = getTicketParkingStartMs(activeExitTicket);
+            let currentUser = JSON.parse(localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "null");
+
+            const snapshot = {
+                token: activeExitTicket.token || activeExitTicket.pnr || "",
+                amount: estimateBill(activeExitTicket, hourlyRate),
+                ratePerHour: hourlyRate,
+                standardHourlyRate: standardRate,
+                bookingCreatedAt: activeExitTicket.booking_time || null,
+                zoneLabel: zoneLabel,
+                ownerName: currentUser?.name || "Vehicle Owner",
+                vehicleNumber: activeExitTicket.veh || activeExitTicket.vehicle_number || "Booked Vehicle",
+                vehicleType: activeExitTicket.vtype || activeExitTicket.vehicle_type || activeExitTicket.type || "car",
+                entryMs: entryMs,
+                entryLabel: formatArrivedDateTime(activeExitTicket),
+                bookedDurationLabel: formatBookedDuration(activeExitTicket),
+                durationHours: getBookedDurationHours(activeExitTicket)
+            };
+            localStorage.setItem("pm_ticket_banner_snapshot", JSON.stringify(snapshot));
+        }
+
+        const modal = document.getElementById("ticketPhotoModal");
+        const frame = document.getElementById("ticketPhotoFrame");
+        const viewUrl = `TICKET.html?v=9&token=${encodeURIComponent(token || "")}&view=image&preview=true`;
+        if (modal && frame) {
+            frame.src = viewUrl;
+            modal.style.display = "flex";
+        } else {
+            window.location.href = viewUrl;
+        }
+      }
+
+      window.closeTicketPhotoModal = function() {
+        const modal = document.getElementById("ticketPhotoModal");
+        const frame = document.getElementById("ticketPhotoFrame");
+        if (modal) modal.style.display = "none";
+        if (frame) frame.src = "about:blank";
+      };
+
+      function payPendingTicket(token) {
+        const tickets = loadTickets();
+        const ticket = tickets.find(t => String(t.token || t.pnr) === String(token));
+        if (!ticket) return;
+        enterFullscreen();
+        const bill = Number(ticket.locked_amount || 0);
+        const cashback = Number(ticket.locked_cashback || 0);
+        openExitPayForTicket(ticket, "pay_ticket", {
+          bill,
+          cashback,
+          payable: Math.max(0, bill - cashback)
+        });
+      }
+
+      function buildCard(ticket) {
+        const token = ticket.token || ticket.pnr || "";
+        const isPrime = getPrimeState().active;
+        const paymentPending = isPendingExpiredTicket(ticket);
+        const zoneLabel = detectZone(ticket.slot).label;
+        const rate = getTableRate(ticket, isPrime);
+        const standardRate = getTableRate(ticket, false);
+        
+        const entryMs = getTicketParkingStartMs(ticket);
+        const started = isFinite(entryMs) && Date.now() >= entryMs;
+        const arrivalConfirmed = isArrivalConfirmed(ticket);
+        const parkInLabel = formatScheduledParkInDateTime(ticket);
+        const arrivedAtLabel = formatArrivedDateTime(ticket);
+        const bookingLabel = formatBookingDateTime(ticket);
+        const duration = formatBookedDuration(ticket);
+        const arrivedEnabled = canMarkArrivedNow(ticket);
+        const arrivedUnlockMs = getArrivedUnlockMs(ticket);
+        const arrivedHint = !arrivalConfirmed && !arrivedEnabled && isFinite(arrivedUnlockMs)
+          ? `Available from ${formatDateTimeDisplay(arrivedUnlockMs, "--")}`
+          : "";
+        const liveDuration = paymentPending
+          ? `${duration} (Expired)`
+          : (started ? getLiveParkingDurationLabel(entryMs, Date.now()) : "Starts when you tap Arrived");
+        const bill = paymentPending ? Number(ticket.locked_amount || 0) : (started ? estimateBill(ticket, rate) : 0);
+        const rawType = ticket.vtype || ticket.vehicle_type || ticket.vehicleType || ticket.type || ticket.vehType || "Car";
+        const type = rawType.toUpperCase();
+        const exitPayDisplay = paymentPending ? "" : (started ? "" : "display:none;");
+        const exitPayDisabled = paymentPending ? "" : (started ? "" : "disabled");
+        const statusLabel = paymentPending ? "PAYMENT PENDING" : (arrivalConfirmed ? "ARRIVED" : "ACTIVE");
+        const statusStyle = paymentPending
+          ? 'border-color: rgba(239,68,68,0.18); background: rgba(239,68,68,0.10); color: #fca5a5;'
+          : (arrivalConfirmed ? 'border-color: rgba(16,185,129,0.22); background: rgba(16,185,129,0.12); color: #86efac;' : "");
+        const paymentInfo = paymentPending
+          ? `<div class="field"><div class="label">Ticket Status</div><div class="value hi" style="color:#fca5a5;">Time expired. Click Complete Payment to pay this ticket. The ticket will be removed only after payment succeeds.</div></div>`
+          : "";
+        const safeToken = String(token).replace(/'/g, "\\'");
+        const paymentButton = paymentPending
+          ? `<button class="btn btn-exit js-exit-pay" data-live-entry-ms="${entryMs}" style="${exitPayDisplay}" onclick="payPendingTicket('${safeToken}')"><i class="fas fa-credit-card"></i> Complete Payment</button>`
+          : `<button class="btn btn-exit js-exit-pay" data-live-entry-ms="${entryMs}" style="${exitPayDisplay}" ${exitPayDisabled} onclick="goToExit('${safeToken}')"><i class="fas fa-door-open"></i> Exit & Pay</button>`;
+        const cancelButton = paymentPending
+          ? ""
+          : `<button class="btn" style="background: linear-gradient(135deg, #6b7280, #4b5563); box-shadow: 0 14px 28px rgba(107, 114, 128, 0.18);" onclick="doCancel('${safeToken}')"><i class="fas fa-times-circle"></i> Cancel</button>`;
+        const arrivedButton = paymentPending
+          ? ""
+          : `<button class="btn btn-arrived js-arrived-btn" data-ticket-token="${safeToken}" ${arrivalConfirmed || !arrivedEnabled ? "disabled" : ""} onclick="markTicketArrived('${safeToken}')"><i class="fas fa-location-dot"></i> Arrived</button>`;
+        const arrivedHelper = paymentPending || !arrivedHint
+          ? ""
+          : `<div style="width:100%; color:rgba(255,255,255,0.58); font-size:0.8rem; margin-top:-4px;">${arrivedHint}</div>`;
+
+        let rateHtml = `<div class="value">₹${standardRate}/hr</div>`;
+        if (isPrime) {
+          rateHtml = `<div class="value hi"><span style="text-decoration:line-through;color:var(--muted);font-size:0.75rem;font-weight:400;">₹${standardRate}/hr</span> <span style="color:var(--gold);">₹${rate}/hr</span></div>`;
+        }
+
+        return `
+          <section class="ticket-card">
+            <div class="ticket-head">
+              <div>
+                <div class="slot">#${ticket.slot || "--"}</div>
+                <div class="token">${token}</div>
+              </div>
+              <div class="status" style="${statusStyle}">${statusLabel}</div>
+            </div>
+            <div class="fields">
+              <div class="field"><div class="label">Vehicle</div><div class="value">${ticket.veh || ticket.vehicle || "--"}</div></div>
+              <div class="field"><div class="label">Zone</div><div class="value">${zoneLabel}</div></div>
+              <div class="field"><div class="label">Booking Date & Time</div><div class="value">${bookingLabel}</div></div>
+              <div class="field"><div class="label">Parking Date & Time</div><div class="value">${parkInLabel}</div></div>
+              <div class="field"><div class="label">Arrived Time</div><div class="value">${arrivedAtLabel}</div></div>
+              <div class="field"><div class="label">Parking Duration</div><div class="value">${duration}</div></div>
+              <div class="field"><div class="label">Live Parking Duration</div><div class="value js-live-parking-duration" data-live-entry-ms="${entryMs}" data-live-static="${paymentPending ? "1" : "0"}">${liveDuration}</div></div>
+              <div class="field"><div class="label">Rate/HR</div>${rateHtml}</div>
+              <div class="field"><div class="label">Est. Bill</div><div class="value hi js-live-bill" data-live-entry-ms="${entryMs}" data-live-hourly-rate="${rate}" data-live-static="${paymentPending ? "1" : "0"}">₹${bill}</div></div>
+              <div class="field"><div class="label">Type</div><div class="value" style="color: var(--green);">${type}</div></div>
+              ${paymentPending ? "" : getArrivalPanelHtml(ticket)}
+              ${paymentInfo}
+            </div>
+            <div class="actions">
+              ${paymentButton}
+              ${cancelButton}
+              ${arrivedButton}
+              ${arrivedHelper}
+              <button class="btn btn-photo" onclick="openPhoto('${safeToken}')"><i class="fas fa-image"></i> Ticket Photo</button>
+            </div>
+          </section>
+        `;
+      }
+
+      window.goToExit = goToExit;
+      window.openPhoto = openPhoto;
+      window.payPendingTicket = payPendingTicket;
+      window.closeExitPayModal = closeExitPayModal;
+      window.confirmExitPay = confirmExitPay;
+
+      window.doCancel = async function(token) {
+        const tickets = loadTickets();
+        const ticket = tickets.find(t => String(t.token || t.pnr) === String(token));
+        if (!ticket) return;
+
+        let bookingMs;
+        try {
+          bookingMs = getStoredBookingMs(ticket, true);
+        } catch (error) {
+          Swal.fire("Error", error.message, "error");
+          return;
+        }
+        const cancellationMs = Date.now();
+        const elapsedHrs = Math.max(0, (cancellationMs - bookingMs) / 3600000);
+        const fee = getCancellationFee(bookingMs, cancellationMs);
+        const feeLine = `Cancellation Fee: <b>&#8377;${fee}</b>`;
+        const timeLine = `<small>Time from booking: ${elapsedHrs.toFixed(2)} hours</small>`;
+
+        const result = await Swal.fire({
+          title: 'Cancel Booking?',
+          html: `${feeLine}<br>${timeLine}<br><br>This fee will be added to your pending dues.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, Cancel',
+          confirmButtonColor: '#ef4444',
+          background: '#0d1117',
+          color: '#fff'
+        });
+
+        if (!result.isConfirmed) return;
+        executeCancellation(ticket, fee);
+      };
+
+      async function executeCancellation(ticket, fee) {
+        try {
+          const userRaw = localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "{}";
+          const user = JSON.parse(userRaw !== "null" ? userRaw : "{}");
+          const userId = user.id || localStorage.getItem("pm_user_id");
+
+          const res = await fetch("api.php?action=cancel_ticket", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: userId,
+              ticket_id: ticket.id,
+              booking_time: ticket.booking_time
+            }),
+          });
+          const data = await res.json();
+          if (data.status === "success") {
+            const deductedFee = parseFloat(data.fee ?? fee) || fee;
+            user.balance = parseFloat(data.new_balance ?? user.balance) || 0;
+            user.pending_due = (user.pending_due || 0) + deductedFee;
+            localStorage.setItem("pmCurrentUser", JSON.stringify(user));
+            localStorage.setItem("currentUser", JSON.stringify(user));
+            localStorage.removeItem('selected_slot_id');
+            localStorage.removeItem('pending_slot_id');
+            Swal.fire("Cancelled", `Booking cancelled. Cancellation Fee: &#8377;${deductedFee} added to pending dues.`, "success").then(() => { window.location.reload(); });
+          } else {
+            throw new Error(data.error || "Cancellation failed");
+          }
+        } catch (e) {
+          Swal.fire("Error", e.message, "error");
+        }
+      }
+
+      async function cancelForArrival(ticket, reason, successMessage) {
+        const userId = getCurrentUserId();
+        if (!ticket?.id || !userId) throw new Error("Ticket or user session missing.");
+        const data = await postTicketAction("cancel_ticket_for_arrival", {
+          user_id: userId,
+          ticket_id: ticket.id,
+          reason: reason || "arrival_declined"
+        });
+
+        try {
+          const userRaw = localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "{}";
+          const user = JSON.parse(userRaw !== "null" ? userRaw : "{}");
+          user.balance = parseFloat(data.new_balance ?? user.balance) || 0;
+          localStorage.setItem("pmCurrentUser", JSON.stringify(user));
+          localStorage.setItem("currentUser", JSON.stringify(user));
+        } catch { }
+        localStorage.removeItem('selected_slot_id');
+        localStorage.removeItem('pending_slot_id');
+
+        await fetchTickets();
+        await Swal.fire("Cancelled", successMessage, "success");
+      }
+
+      window.markTicketArrived = async function(token) {
+        const tickets = loadTickets();
+        const ticket = tickets.find((t) => String(t.token || t.pnr) === String(token));
+        if (!ticket) return;
+        if (isArrivalConfirmed(ticket)) {
+          Swal.fire("Arrived", "You have already marked this booking as arrived.", "success");
+          return;
+        }
+        if (!canMarkArrivedNow(ticket)) {
+          Swal.fire("Too Early", "You can mark Arrived only within 10 minutes before your scheduled parking time.", "info");
+          return;
+        }
+
+        try {
+          const userId = getCurrentUserId();
+          const data = await postTicketAction("mark_arrived", {
+            user_id: userId,
+            ticket_id: ticket.id
+          });
+          mergeTicketUpdate(getTicketKey(ticket), {
+            arrival_status: "arrived",
+            arrival_confirmed_at: data.arrival_confirmed_at || new Date().toISOString(),
+            arrival_grace_expires_at: null,
+            expected_exit_at: data.expected_exit_at || ticket.expected_exit_at || null
+          });
+          renderTickets(loadTickets());
+          await Swal.fire("Success", data.message || "You have successfully arrived at the parking slot.", "success");
+          fetchTickets();
+        } catch (error) {
+          Swal.fire("Error", error.message || "Unable to mark arrival.", "error");
+        }
+      };
+
+      window.closeWalletModal = closeWalletModal;
+      window.setWmAmount = setWmAmount;
+      window.processWalletAdd = processWalletAdd;
+
+      function renderTickets(ticketsList) {
+        if (!Array.isArray(ticketsList)) ticketsList = [];
+        const activeCount = ticketsList.filter((t) => !isPendingExpiredTicket(t)).length;
+        const pendingCount = ticketsList.filter((t) => isPendingExpiredTicket(t)).length;
+        document.getElementById("ticketCountBadge").textContent = pendingCount > 0
+          ? `${activeCount} ACTIVE • ${pendingCount} PENDING`
+          : `${activeCount} ACTIVE`;
+        document.getElementById("ticketsGrid").innerHTML = ticketsList.length
+          ? ticketsList.map(buildCard).join("")
+          : `<div class="empty"><i class="fas fa-ticket-alt" style="font-size:2rem;display:block;margin-bottom:14px;opacity:0.32;"></i>No active tickets right now.</div>`;
+        startLiveTimerLoop();
+      }
+
+      let liveTimerIntervalId = null;
+      let liveTimerAlignTimeoutId = null;
+
+      function updateAllLiveFields() {
+        const now = Date.now();
+
+        document.querySelectorAll(".js-exit-pay[data-live-entry-ms]").forEach((el) => {
+          if (/Complete Payment/i.test(el.textContent || "")) {
+            el.disabled = false;
+            el.style.display = "";
+            return;
+          }
+          const entryMs = Number(el.dataset.liveEntryMs);
+          const shouldShow = isFinite(entryMs) && now >= entryMs;
+          el.disabled = !shouldShow;
+          el.style.display = shouldShow ? "" : "none";
+        });
+
+        document.querySelectorAll(".js-live-parking-duration[data-live-entry-ms]").forEach((el) => {
+          if (el.dataset.liveStatic === "1") return;
+          const entryMs = Number(el.dataset.liveEntryMs);
+          if (!isFinite(entryMs)) {
+            el.textContent = "Starts when you tap Arrived";
+            return;
+          }
+          el.textContent = getLiveParkingDurationLabel(entryMs, now);
+        });
+
+        document.querySelectorAll(".js-live-bill[data-live-entry-ms][data-live-hourly-rate]").forEach((el) => {
+          if (el.dataset.liveStatic === "1") return;
+          const entryMs = Number(el.dataset.liveEntryMs);
+          const hourlyRate = Number(el.dataset.liveHourlyRate);
+          if (!isFinite(entryMs) || !isFinite(hourlyRate)) {
+            el.textContent = "₹0";
+            return;
+          }
+          if (now < entryMs) {
+            el.textContent = "₹0";
+            return;
+          }
+
+          const elapsedMs = Math.max(0, now - entryMs);
+          const totalMins = Math.floor(elapsedMs / 60000);
+          const elapsedHours = elapsedMs / 3600000;
+          let bill;
+          if (totalMins < 1) bill = Math.ceil(hourlyRate / 60);
+          else if (elapsedHours < 1) bill = Math.ceil(totalMins * (hourlyRate / 60));
+          else bill = Math.round(hourlyRate * elapsedHours);
+          el.textContent = "₹" + bill;
+        });
+        const tickets = loadTickets();
+        document.querySelectorAll(".js-arrived-btn[data-ticket-token]").forEach((el) => {
+          const token = String(el.dataset.ticketToken || "");
+          const ticket = tickets.find((item) => String(item.token || item.pnr) === token);
+          if (!ticket || isArrivalConfirmed(ticket) || isPendingExpiredTicket(ticket)) return;
+          el.disabled = !canMarkArrivedNow(ticket, now);
+        });
+        document.querySelectorAll(".js-arrival-status[data-ticket-key]").forEach((el) => {
+          const key = String(el.dataset.ticketKey || "");
+          const ticket = tickets.find((item) => getTicketKey(item) === key);
+          if (!ticket) return;
+          el.textContent = getArrivalPromptState(ticket, now).label;
+        });
+      }
+
+      function startLiveTimerLoop() {
+        if (liveTimerIntervalId) {
+          clearInterval(liveTimerIntervalId);
+          liveTimerIntervalId = null;
+        }
+        if (liveTimerAlignTimeoutId) {
+          clearTimeout(liveTimerAlignTimeoutId);
+          liveTimerAlignTimeoutId = null;
+        }
+
+        updateAllLiveFields();
+
+        // Align updates to the next second tick so the timer feels "live".
+        const msToNextSecond = 1000 - (Date.now() % 1000) + 20;
+        liveTimerAlignTimeoutId = setTimeout(() => {
+          updateAllLiveFields();
+          runTicketLifecycleChecks(Date.now());
+          liveTimerIntervalId = setInterval(() => {
+            updateAllLiveFields();
+            runTicketLifecycleChecks(Date.now());
+          }, 1000);
+        }, msToNextSecond);
+      }
+
+      async function fetchServerTickets() {
+        const userRaw = localStorage.getItem("pmCurrentUser") || localStorage.getItem("currentUser") || "{}";
+        const user = JSON.parse(userRaw !== "null" ? userRaw : "{}");
+        const userId = user.id || localStorage.getItem("pm_user_id");
+        if (!userId) return;
+
+        try {
+          const res = await fetch(`api.php?action=get_user&id=${encodeURIComponent(userId)}`);
+          const data = await res.json();
+          const pendingServerTicket = data?.unpaidExpiredTicket
+            ? {
+                ...data.unpaidExpiredTicket,
+                status: "expired",
+                payment_required: true,
+                pending_payment: true,
+                locked_amount: Number(data.unpaidExpiredTicket.locked_amount || data.unpaidExpiredTicket.amount || 0),
+                locked_cashback: Number(data.unpaidExpiredTicket.locked_cashback || data.unpaidExpiredTicket.cashback || 0)
+              }
+            : null;
+          if (data?.unpaidExpiredTicket) {
+            restoreLockedPaymentIfAny(data.unpaidExpiredTicket);
+          } else {
+            clearPaymentLock();
+            setMandatoryPaymentMode(false);
+          }
+          maybeShowArrivalNoResponseNotice(data?.recentArrivalNoResponseCancellation || null);
+          if (data && Array.isArray(data.activeTickets)) {
+            let serverTickets = data.activeTickets;
+
+            // Safety: if server still returns expired tickets, drop them locally and free slots.
+            const nowMs = Date.now();
+            const expiredFromServer = [];
+            serverTickets = serverTickets.filter(t => {
+              try {
+                const entryMs = getTicketParkingStartMs(t);
+                if (!isFinite(entryMs)) return true;
+                const endMs = entryMs + (getBookedDurationHours(t) * 3600000);
+                if (nowMs >= endMs) {
+                  expiredFromServer.push(t);
+                  return false;
+                }
+                return true;
+              } catch {
+                return true;
+              }
+            });
+
+            if (expiredFromServer.length) {
+              const toFree = new Set(expiredFromServer.map(t => Number(t?.slot)).filter(n => isFinite(n)));
+              let bookedSlots = [];
+              try { bookedSlots = JSON.parse(localStorage.getItem("bookedSlots") || "[]") || []; } catch { }
+              bookedSlots = (Array.isArray(bookedSlots) ? bookedSlots : []).map(Number).filter(slot => !toFree.has(Number(slot)));
+              localStorage.setItem("bookedSlots", JSON.stringify(bookedSlots));
+            }
+            const serverActiveIds = new Set(serverTickets.map(t => String(t.id)));
+            
+            // Combine local and server tickets to prevent erasing un-synced bookings
+            let localTickets = loadTickets();
+            const validLocal = localTickets.filter(t => {
+                if (t.id && !serverActiveIds.has(String(t.id))) return false;
+                return true;
+            });
+
+            // Preserve local timestamp & formatting strings when syncing from server
+            const merged = serverTickets.map(st => {
+                const localMatch = validLocal.find(lt => String(lt.token || lt.pnr) === String(st.token || st.pnr));
+                if (localMatch) {
+                    return {
+                      ...st,
+                      timeStr: localMatch.timeStr || st.timeStr,
+                      fullDate: localMatch.fullDate || st.fullDate,
+                      timestamp: localMatch.timestamp || st.timestamp,
+                      duration_minutes: localMatch.duration_minutes || st.duration_minutes,
+                      duration_label: localMatch.duration_label || st.duration_label
+                    };
+                }
+                return st;
+            });
+            const serverTokens = new Set(serverTickets.map(t => String(t.token || t.pnr)));
+            validLocal.forEach(t => {
+                if (!serverTokens.has(String(t.token || t.pnr))) merged.push(t);
+            });
+            const pendingLocal = loadTickets().filter((t) => isPendingExpiredTicket(t));
+            pendingLocal.forEach((t) => {
+                const key = getTicketKey(t);
+                if (!merged.some((m) => getTicketKey(m) === key)) merged.push(t);
+            });
+            if (pendingServerTicket) {
+                const key = getTicketKey(pendingServerTicket);
+                if (!merged.some((m) => getTicketKey(m) === key)) merged.unshift(pendingServerTicket);
+            }
+
+            localStorage.setItem("pm_active_tickets", JSON.stringify(merged));
+            localStorage.setItem(`pm_active_tickets_${userId}`, JSON.stringify(merged));
+            if (merged.length > 0) {
+                localStorage.setItem("activeTicket", JSON.stringify(merged[0]));
+            } else {
+                localStorage.removeItem("activeTicket");
+            }
+            renderTickets(merged);
+          }
+        } catch (e) {
+          console.error("Failed to sync tickets from server", e);
+        }
+      }
+
+      let tickets = loadTickets();
+      renderTickets(tickets);
+      const exitPayModal = document.getElementById("exitPayModal");
+      const walletModal = document.getElementById("walletModal");
+      [exitPayModal, walletModal].forEach((modal) => {
+        if (!modal) return;
+        modal.addEventListener("pointerdown", () => {
+          requestPaymentFullscreenNow();
+        }, true);
+      });
+      const dashboardBtn = document.querySelector(".back-btn");
+      if (dashboardBtn) {
+        dashboardBtn.addEventListener("click", (event) => {
+          const hasPendingPayment = mandatoryPaymentActive || !!loadPaymentLock() || loadTickets().some((t) => isPendingExpiredTicket(t));
+          if (!hasPendingPayment) return;
+          event.preventDefault();
+          const lock = loadPaymentLock();
+          Swal.fire("Payment Pending", `Previous expired ticket payment is incomplete${lock?.ticket?.slot ? ` for Slot #${lock.ticket.slot}` : ""}. Complete payment first.`, "warning").then(() => {
+            if (lock?.ticket) restoreLockedPaymentIfAny(lock.ticket);
+          });
+        });
+      }
+      
+      // ═══════════════════════════════════════════════════════
+      //   GLOBAL SESSION MANAGER (Multi-Device Kickout)
+      // ═══════════════════════════════════════════════════════
+      (function initGlobalSessionHeartbeat() {
+          function checkGlobalSession() {
+              const uid = localStorage.getItem("pm_user_id") || sessionStorage.getItem("pm_session_user");
+              const tok = localStorage.getItem("pm_session_token");
+              if (!uid || !tok) return;
+              fetch("api.php?action=heartbeat", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ user_id: uid, session_token: tok })
+              })
+              .then(r => r.json())
+              .then(data => {
+                  if (data && data.valid === false) {
+                      const keys = ["pm_user_id", "pm_session_token", "pm_device_id", "pm_last_active", "pmCurrentUser", "currentUser", "activeTicket", "pm_active_tickets", "pm_active_ticket_selected", "bookedSlots", "admin_records", "parkmate_booking_sync", "pm_ticket_banner_snapshot", "pm_session_user", "currentUserId"];
+                      keys.forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+                      Object.keys(localStorage).forEach(k => { if (k.startsWith("pm_active_ticket")) localStorage.removeItem(k); });
+                      const msg = data.reason === "device_conflict" ? "This account is active on another device. You have been signed out here." : "Your session has expired or you signed in elsewhere.";
+                      if (window.Swal) {
+                      window.Swal.fire({ title: "Session Ended", text: msg, icon: "info", showConfirmButton: false, timer: 2000, background: "#0d1117", color: "#ffffff" }).then(() => { window.location.replace("index.html"); });
+                      } else {
+                      window.location.replace("index.html");
+                      }
+                  }
+              }).catch(()=>{});
+          }
+          setInterval(checkGlobalSession, 15000);
+          document.addEventListener("visibilitychange", () => { if (!document.hidden) checkGlobalSession(); });
+          window.addEventListener("focus", checkGlobalSession);
+          setTimeout(checkGlobalSession, 2000);
+      })();
+
+      window.onload = async function () {
+        const hasPersistentPaymentLock = localStorage.getItem(PAYMENT_MODE_LOCK_KEY) === "true";
+        const lock = loadPaymentLock();
+        if (hasPersistentPaymentLock && lock?.ticket) {
+          restoreLockedPaymentIfAny(lock.ticket);
+        } else if (mandatoryPaymentActive) {
+          startPaymentMode();
+        }
+        await fetchServerTickets();
+        await fetchTickets(); // Ensure the latest detailed ticket payload is fully loaded
+        
+        // Add a slight delay to guarantee the DOM updates are painted before hiding the loader
+        setTimeout(() => {
+          document.body.classList.remove("page-loading");
+          const loader = document.getElementById("pageLoader");
+          if (loader) loader.classList.add("hidden");
+        }, 450);
+        
+        setInterval(fetchTickets, 2000);
+      };
+      restoreLockedPaymentIfAny();
+    })();
+  </script>
+</body>
+</html>

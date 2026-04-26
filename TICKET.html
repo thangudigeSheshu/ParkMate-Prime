@@ -1,0 +1,2674 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+        <meta http-equiv="Pragma" content="no-cache">
+       <link rel="icon" type="image/png" sizes="128x128" href="/logo.png?v=20260418">
+<link rel="shortcut icon" href="/logo.png?v=20260418">
+<link rel="apple-touch-icon" href="/logo.png?v=20260418">
+        <meta http-equiv="Expires" content="0">
+    <script>
+        (function () {
+            try {
+                var params = new URLSearchParams(window.location.search);
+                if (params.get('view') === 'image' || params.get('preview') === 'true') {
+                    document.documentElement.classList.add('ticket-image-view');
+                }
+            } catch (error) {}
+        })();
+    </script>
+    <title>ParkMate Prime | E-Ticket Generation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600;700&family=Rajdhani:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ══════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════ */
+        :root {
+            --ink: #0d1117;
+            --ink2: #1a2236;
+            --navy: #0f2044;
+            --deep: #060e1f;
+            --orange: #ff9900;
+            --orange2: #e68a00;
+            --orange-glo: rgba(255, 153, 0, 0.25);
+            --green: #00c853;
+            --green-soft: rgba(0, 200, 83, 0.12);
+            --red: #ef233c;
+            --blue: #0575e6;
+            --cyan: #00b4d8;
+            --surface: #ffffff;
+            --off: #f7f9fc;
+            --border: #d8dee9;
+            --text: #1a2236;
+            --text2: #5a6474;
+            --text3: #9ba5b5;
+            --mono: 'JetBrains Mono', monospace;
+            --display: 'Syne', sans-serif;
+            --body: 'DM Sans', sans-serif;
+            --raj: 'Rajdhani', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--body);
+            background: #0d1117;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ══ ANIMATED BACKGROUND ══ */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(ellipse 80% 60% at 20% 20%, rgba(5, 117, 230, 0.12) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 80% 80%, rgba(255, 153, 0, 0.08) 0%, transparent 55%),
+                #060e1f;
+        }
+
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            opacity: 0.04;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.6) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* ══ LOADING / GENERATION OVERLAY ══ */
+        #genOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            background: #060e1f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        html.ticket-image-view #genOverlay {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        #scanLoader {
+            position: fixed;
+            inset: 0;
+            z-index: 9050;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.14), transparent 30%),
+                rgba(6, 14, 31, 0.96);
+            backdrop-filter: blur(16px);
+        }
+
+        #scanLoader.active {
+            display: flex;
+        }
+
+        .scan-loader-card {
+            width: min(100%, 320px);
+            padding: 28px 24px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: linear-gradient(160deg, rgba(16, 24, 48, 0.96), rgba(12, 19, 38, 0.92));
+            box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+            text-align: center;
+        }
+
+        .scan-loader-spinner {
+            width: 54px;
+            height: 54px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.12);
+            border-top-color: #ff9f1c;
+            border-right-color: #3b82f6;
+            animation: spin 0.85s linear infinite;
+        }
+
+        .scan-loader-title {
+            font-family: var(--display);
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .scan-loader-copy {
+            font-size: 0.94rem;
+            line-height: 1.6;
+            color: rgba(226, 232, 240, 0.76);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .gen-logo {
+            font-family: var(--display);
+            font-size: 2rem;
+            font-weight: 800;
+            color: white;
+            opacity: 0;
+            animation: fadeIn 0.5s 0.2s forwards;
+        }
+
+        .gen-logo span {
+            color: var(--orange);
+        }
+
+        .gen-title {
+            font-family: var(--raj);
+            font-size: 1.1rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            animation: fadeIn 0.5s 0.5s forwards;
+        }
+
+        .gen-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 380px;
+            opacity: 0;
+            animation: fadeIn 0.5s 0.8s forwards;
+        }
+
+        .gen-step {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .gen-step.active {
+            border-color: var(--orange);
+            background: rgba(255, 153, 0, 0.07);
+        }
+
+        .gen-step.done {
+            border-color: var(--green);
+            background: rgba(0, 200, 83, 0.06);
+        }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .gen-step.active .step-icon {
+            background: var(--orange);
+            color: var(--ink);
+            animation: spinStep 0.8s linear infinite;
+        }
+
+        .gen-step.done .step-icon {
+            background: var(--green);
+            color: white;
+            animation: none;
+        }
+
+        @keyframes spinStep {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .step-label {
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .gen-step.active .step-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+
+        .gen-step.done .step-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .gen-bar-wrap {
+            width: 100%;
+            max-width: 380px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 99px;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeIn 0.5s 0.8s forwards;
+        }
+
+        .gen-bar {
+            height: 100%;
+            width: 0;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--orange), #ffb347);
+            transition: width 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gen-bar::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            animation: barShine 1s linear infinite;
+        }
+
+        @keyframes barShine {
+            from {
+                transform: translateX(-100%)
+            }
+
+            to {
+                transform: translateX(100%)
+            }
+        }
+
+        .gen-pct {
+            font-family: var(--mono);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--orange);
+            opacity: 0;
+            animation: fadeIn 0.5s 0.8s forwards;
+        }
+
+        .gen-msg {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: var(--mono);
+            letter-spacing: 1px;
+            opacity: 0;
+            animation: fadeIn 0.5s 0.8s forwards;
+        }
+
+        /* ══ MAIN PAGE WRAPPER ══ */
+        #mainPage {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 32px 20px 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            opacity: 0;
+        }
+
+        #mainPage.revealed {
+            animation: pageReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes pageReveal {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ══ SUCCESS BANNER ══ */
+        .success-banner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(135deg, rgba(0, 200, 83, 0.12), rgba(0, 200, 83, 0.05));
+            border: 1px solid rgba(0, 200, 83, 0.3);
+            border-radius: 14px;
+            padding: 16px 24px;
+            width: 100%;
+            max-width: 1000px;
+            animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes bounceIn {
+            from {
+                transform: scale(0.85);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 0 20px rgba(0, 200, 83, 0.4);
+            animation: successPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes successPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(0, 200, 83, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(0, 200, 83, 0.7);
+            }
+        }
+
+        .success-text h3 {
+            font-family: var(--display);
+            color: var(--green);
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
+
+        .success-text p {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .success-pnr {
+            margin-left: auto;
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            color: var(--orange);
+            letter-spacing: 1px;
+        }
+
+        /* ══ THE TICKET ══ */
+        #ticket-content {
+            width: 100%;
+            max-width: 1000px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+            animation: ticketReveal 0.7s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes ticketReveal {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* ── Ticket Header ── */
+        .tk-header {
+            background: linear-gradient(135deg, #0f2044 0%, #0d1a38 60%, #0a1128 100%);
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tk-header::before {
+            content: 'PARKMATE';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: var(--display);
+            font-size: 5rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.025);
+            letter-spacing: 4px;
+            pointer-events: none;
+        }
+
+        /* Shimmer stripe */
+        .tk-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--orange), var(--cyan), var(--orange));
+            background-size: 200% 100%;
+            animation: headerStripe 3s linear infinite;
+        }
+
+        @keyframes headerStripe {
+            0% {
+                background-position: -200% 0
+            }
+
+            100% {
+                background-position: 200% 0
+            }
+        }
+
+        .tk-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1;
+        }
+
+        .tk-brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--orange), #ffb347);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--navy);
+            box-shadow: 0 0 20px rgba(255, 153, 0, 0.4);
+        }
+
+        .tk-brand-name {
+            font-family: var(--display);
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .tk-brand-name span {
+            color: var(--orange);
+            font-style: italic;
+        }
+
+        .tk-brand-tag {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: var(--raj);
+        }
+
+        .tk-head-center {
+            text-align: center;
+            z-index: 1;
+        }
+
+        .tk-ticket-label {
+            font-family: var(--raj);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: white;
+        }
+
+        .tk-ticket-sub {
+            font-size: 0.68rem;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .tk-qr {
+            text-align: center;
+            z-index: 1;
+        }
+
+        .tk-qr img {
+            width: 72px;
+            height: 72px;
+            border: 2px solid rgba(255, 153, 0, 0.3);
+            border-radius: 8px;
+            padding: 4px;
+            background: white;
+        }
+
+        .tk-qr-label {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.35);
+            margin-top: 4px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ── Security Stripe ── */
+        .security-stripe {
+            background: repeating-linear-gradient(45deg,
+                    rgba(255, 153, 0, 0.08) 0px, rgba(255, 153, 0, 0.08) 8px,
+                    transparent 8px, transparent 16px);
+            border-top: 1px dashed rgba(255, 153, 0, 0.2);
+            border-bottom: 1px dashed rgba(255, 153, 0, 0.2);
+            padding: 6px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sec-item {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: rgba(255, 153, 0, 0.7);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sec-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: secBlink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes secBlink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.3
+            }
+        }
+
+        /* ── Ticket Body ── */
+        .tk-body {
+            background: white;
+            padding: 0;
+        }
+
+        /* Token + Date row */
+        .tk-meta-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            background: #f0f4fb;
+            border-bottom: 2px solid #e2e8f5;
+        }
+
+        .tk-meta-cell {
+            padding: 12px 20px;
+            border-right: 1px solid #e2e8f5;
+            position: relative;
+        }
+
+        .tk-meta-cell:last-child {
+            border-right: none;
+        }
+
+        .tk-meta-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text3);
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .tk-meta-val {
+            font-family: var(--mono);
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .tk-meta-val.big {
+            font-size: 1.1rem;
+            color: var(--navy);
+        }
+
+        .tk-meta-val.green {
+            color: var(--green);
+        }
+
+        .tk-meta-val.orange {
+            color: var(--orange2);
+        }
+
+        /* Main info section */
+        .tk-main {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 0;
+            border-bottom: 2px solid #e2e8f5;
+            min-height: 120px;
+        }
+
+        .tk-vehicle-section {
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 1px solid #e2e8f5;
+        }
+
+        .tk-slot-section {
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: var(--navy);
+            color: white;
+            min-width: 130px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tk-slot-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(255, 153, 0, 0.12) 0%, transparent 70%);
+        }
+
+        .tk-time-section {
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-left: 1px solid #e2e8f5;
+        }
+
+        .tk-field-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text3);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .tk-field-val {
+            font-family: var(--mono);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .tk-plate {
+            font-family: var(--mono);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--navy);
+            background: #eef2fa;
+            border: 2px solid var(--navy);
+            border-radius: 6px;
+            padding: 4px 14px;
+            display: inline-block;
+            letter-spacing: 2px;
+        }
+
+        .tk-slot-num {
+            font-family: var(--display);
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--orange);
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(255, 153, 0, 0.5);
+            position: relative;
+            z-index: 1;
+        }
+
+        .tk-slot-zone {
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Details grid */
+        .tk-details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border-bottom: 2px solid #e2e8f5;
+        }
+
+        .tk-detail-cell {
+            padding: 14px 18px;
+            border-right: 1px solid #e2e8f5;
+        }
+
+        .tk-detail-cell:last-child {
+            border-right: none;
+        }
+
+        .tk-detail-cell.full-span {
+            grid-column: span 2;
+        }
+
+        /* Status row */
+        .tk-status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 24px;
+            background: linear-gradient(90deg, rgba(0, 200, 83, 0.06) 0%, white 100%);
+            border-bottom: 1px solid #e2e8f5;
+        }
+
+        .tk-verified {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .verified-badge {
+            background: var(--green);
+            color: white;
+            font-family: var(--raj);
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 5px 14px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tk-security-hash {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            color: var(--text3);
+            letter-spacing: 0.5px;
+        }
+
+        /* Perforated divider */
+        .perforated {
+            height: 28px;
+            position: relative;
+            overflow: visible;
+            background: white;
+            display: flex;
+            align-items: center;
+            border-top: 2px dashed #dde3ef;
+            border-bottom: 2px dashed #dde3ef;
+        }
+
+        .perforated::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #0d1117;
+            transform: translateY(-50%);
+            box-shadow: inset 2px 0 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .perforated::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #0d1117;
+            transform: translateY(-50%);
+        }
+
+        .perf-text {
+            width: 100%;
+            text-align: center;
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: #aab4c8;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            background: white;
+            padding: 0 16px;
+        }
+
+        /* Stub / Bottom half */
+        .tk-stub {
+            background: #f7f9fc;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stub-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-width: 90px;
+        }
+
+        .stub-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text3);
+            font-weight: 700;
+        }
+
+        .stub-val {
+            font-family: var(--mono);
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stub-qr img {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #dde3ef;
+            border-radius: 6px;
+        }
+
+        /* Barcode row */
+        .tk-barcode {
+            background: white;
+            padding: 10px 24px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .barcode-img {
+            height: 36px;
+            flex: 1;
+            background: repeating-linear-gradient(90deg, #111 0px, #111 2px, transparent 2px, transparent 4px),
+                repeating-linear-gradient(90deg, #111 0px, #111 1px, transparent 1px, transparent 6px),
+                repeating-linear-gradient(90deg, #333 0px, #333 3px, transparent 3px, transparent 7px),
+                white;
+            border-radius: 2px;
+        }
+
+        .barcode-num {
+            font-family: var(--mono);
+            font-size: 0.62rem;
+            color: var(--text3);
+            letter-spacing: 2px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* ── Ticket Footer ── */
+        .tk-footer {
+            background: #0f2044;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tk-footer-left {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.35);
+            line-height: 1.6;
+            max-width: 55%;
+        }
+
+        .tk-footer-left strong {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .tk-footer-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .tk-valid-chip {
+            background: rgba(0, 200, 83, 0.15);
+            border: 1px solid rgba(0, 200, 83, 0.3);
+            color: var(--green);
+            font-family: var(--raj);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tk-valid-chip.expired {
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.24);
+            color: #ef4444;
+        }
+
+        .vdot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: secBlink 1.5s ease-in-out infinite;
+        }
+
+        .tk-valid-chip.expired .vdot {
+            background: #ef4444;
+            animation: none;
+        }
+
+        .verified-badge.expired {
+            background: #ef4444;
+        }
+
+        .tk-status-note.expired {
+            color: #b91c1c !important;
+            font-weight: 700;
+        }
+
+        .tk-rate-note {
+            margin-top: 6px;
+            font-size: 0.73rem;
+            line-height: 1.45;
+            color: var(--text3);
+        }
+
+        .tk-rate-note.expired {
+            color: #b91c1c;
+            font-weight: 700;
+        }
+
+        /* ══ COUNTDOWN TIMER ══ */
+        .countdown-card {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 14px;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .cd-label {
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-family: var(--raj);
+        }
+
+        .cd-units {
+            display: flex;
+            gap: 10px;
+        }
+
+        .cd-unit {
+            text-align: center;
+            min-width: 56px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 8px 6px;
+        }
+
+        .cd-num {
+            font-family: var(--mono);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--orange);
+            display: block;
+            line-height: 1;
+        }
+
+        .cd-unit-label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 4px;
+            display: block;
+        }
+
+        .cd-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cd-progress-wrap {
+            width: 160px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .cd-progress {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--orange), #ffb347);
+            transition: width 1s linear;
+        }
+
+        .cd-pct {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--orange);
+        }
+
+        /* ══ ALGORITHM PANEL ══ */
+        .algo-panel {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 14px;
+            padding: 20px 24px;
+        }
+
+        .algo-title {
+            font-family: var(--display);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .algo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .algo-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .algo-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(255, 153, 0, 0.2);
+        }
+
+        .algo-card-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-bottom: 6px;
+        }
+
+        .algo-card-val {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .algo-card-val.orange {
+            color: var(--orange);
+        }
+
+        .algo-card-val.green {
+            color: var(--green);
+        }
+
+        .algo-card-val.cyan {
+            color: var(--cyan);
+        }
+
+        .algo-card-val.red {
+            color: #ff6b6b;
+        }
+
+        .algo-bar {
+            height: 3px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, 0.06);
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .algo-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: var(--orange);
+            transition: width 1.5s 0.5s ease;
+        }
+
+        .algo-bar-fill.green {
+            background: var(--green);
+        }
+
+        .algo-bar-fill.cyan {
+            background: var(--cyan);
+        }
+
+        /* ══ ACTION BUTTONS ══ */
+        .action-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: var(--body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0);
+            transition: background 0.15s ease;
+        }
+
+        .btn:hover::after {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #0f2044, #1a3060);
+            color: white;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-pdf:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-share {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .btn-share:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .btn-home {
+            background: linear-gradient(135deg, var(--orange), #ffb347);
+            color: var(--navy);
+            font-weight: 700;
+            box-shadow: 0 4px 16px rgba(255, 153, 0, 0.3);
+        }
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 153, 0, 0.4);
+        }
+
+        .btn-cancel {
+            background: rgba(239, 35, 60, 0.1);
+            border: 1px solid rgba(239, 35, 60, 0.2);
+            color: #ff6b6b;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(239, 35, 60, 0.18);
+        }
+
+        /* Ripple */
+        .btn .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0);
+            animation: ripple 0.5s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* ══ TOAST ══ */
+        #toasts {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 0.87rem;
+            font-weight: 500;
+            color: white;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 320px;
+        }
+
+        .toast.ok {
+            background: #0f2044;
+            border-left: 4px solid var(--green);
+        }
+
+        .toast.err {
+            background: #1a0a0e;
+            border-left: 4px solid var(--red);
+        }
+
+        .toast.inf {
+            background: #0a1a2e;
+            border-left: 4px solid var(--cyan);
+        }
+
+        @keyframes toastIn {
+            from {
+                transform: translateX(120%) scale(0.8);
+                opacity: 0
+            }
+
+            to {
+                transform: translateX(0) scale(1);
+                opacity: 1
+            }
+        }
+
+        /* ══ SHARED ══ */
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           RESPONSIVE BREAKPOINTS (CSS GRID & FLEX WRAP)
+           ═══════════════════════════════════════════════════════ */
+
+        /* Tablets & iPads (Portrait & Landscape) */
+        @media (max-width: 1024px) {
+            .tk-main {
+                grid-template-columns: 1fr 1fr;
+            }
+            .tk-slot-section {
+                grid-column: 1 / -1;
+                order: -1; /* Move slot to top */
+                border-bottom: 2px solid #e2e8f5;
+                padding: 16px 20px;
+            }
+            .tk-vehicle-section {
+                border-right: 1px solid #e2e8f5;
+                padding: 16px 20px;
+            }
+            .tk-time-section {
+                border-left: none;
+                padding: 16px 20px;
+            }
+            .tk-meta-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .tk-meta-cell:nth-child(2n) {
+                border-right: none;
+            }
+            .tk-meta-cell:nth-child(1),
+            .tk-meta-cell:nth-child(2) {
+                border-bottom: 1px solid #e2e8f5;
+            }
+            .tk-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .tk-detail-cell:nth-child(2n) {
+                border-right: none;
+            }
+            .tk-detail-cell:nth-child(1),
+            .tk-detail-cell:nth-child(2) {
+                border-bottom: 1px solid #e2e8f5;
+            }
+        
+
+        /* Large Phones / Small Tablets */
+
+            .algo-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tk-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            .tk-footer-left {
+                max-width: 100%;
+            }
+            .tk-footer-right {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .success-banner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .success-pnr {
+                margin-left: 0;
+                align-self: flex-end;
+            }
+        }
+
+        /* Standard Mobile Phones */
+        @media (max-width: 480px) {
+            #mainPage {
+                padding: 20px 12px 40px;
+            }
+
+            .tk-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
+                padding: 16px 12px;
+            }
+            .tk-head-center {
+                order: -1;
+            }
+            .tk-brand-name { font-size: 1.05rem; }
+            .tk-ticket-label { font-size: 1.25rem; }
+            .tk-header::before {
+                font-size: 3.5rem;
+                right: -5px;
+            }
+
+            .security-stripe {
+                flex-direction: column;
+                gap: 6px;
+                align-items: center;
+                padding: 10px;
+            }
+            .sec-item {
+                font-size: 0.65rem;
+                text-align: center;
+            }
+
+            /* Main Ticket Grid - 1 column */
+            .tk-main {
+                grid-template-columns: 1fr;
+            }
+            .tk-vehicle-section {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f5;
+            }
+            
+            /* 🚀 THE FIX for the overflowing text box */
+            .tk-plate {
+                font-size: 1.15rem;
+                letter-spacing: 1px;
+                padding: 6px 12px;
+                max-width: 100%;
+                box-sizing: border-box;
+                word-break: break-all;
+            }
+
+            .tk-meta-row {
+                grid-template-columns: 1fr;
+            }
+            .tk-meta-cell {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f5;
+            }
+            .tk-meta-cell:last-child {
+                border-bottom: none;
+            }
+
+            .tk-details {
+                grid-template-columns: 1fr;
+            }
+            .tk-detail-cell {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f5;
+            }
+            .tk-detail-cell:last-child {
+                border-bottom: none;
+            }
+
+            .tk-status-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .tk-stub {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .stub-qr {
+                align-self: center;
+                margin-top: 10px;
+            }
+            .stub-cell {
+                border-bottom: 1px dashed #dde3ef;
+                padding-bottom: 8px;
+            }
+            .stub-cell:last-child {
+                border-bottom: none;
+            }
+
+            .tk-barcode {
+                flex-direction: column;
+            }
+
+            .algo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .countdown-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .cd-status {
+                width: 100%;
+            }
+            .cd-progress-wrap {
+                flex: 1;
+            }
+
+            .action-row {
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+                min-width: 100%;
+                flex: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="page-loading">
+
+    <div class="bg-canvas"></div>
+    <div class="bg-grid"></div>
+
+    <!-- ══ GENERATION OVERLAY ══ -->
+    <div id="genOverlay">
+        <div class="gen-logo">ParkMate<span>Prime</span></div>
+        <div class="gen-title">E-Ticket Generation System</div>
+        <div class="gen-pct" id="genPct">0%</div>
+        <div class="gen-bar-wrap">
+            <div class="gen-bar" id="genBar"></div>
+        </div>
+        <div class="gen-steps">
+            <div class="gen-step" id="s1">
+                <div class="step-icon"><i class="fas fa-shield-alt"></i></div>
+                <span class="step-label">Authenticating vehicle credentials...</span>
+            </div>
+            <div class="gen-step" id="s2">
+                <div class="step-icon"><i class="fas fa-map-marker-alt"></i></div>
+                <span class="step-label">Locking allocated parking slot...</span>
+            </div>
+            <div class="gen-step" id="s3">
+                <div class="step-icon"><i class="fas fa-qrcode"></i></div>
+                <span class="step-label">Generating secure QR & barcode...</span>
+            </div>
+            <div class="gen-step" id="s4">
+                <div class="step-icon"><i class="fas fa-file-invoice"></i></div>
+                <span class="step-label">Compiling E-Ticket document...</span>
+            </div>
+            <div class="gen-step" id="s5">
+                <div class="step-icon"><i class="fas fa-check-double"></i></div>
+                <span class="step-label">Final security hash verification...</span>
+            </div>
+        </div>
+        <div class="gen-msg" id="genMsg">INITIALIZING PARKMATE SECURE GATEWAY...</div>
+    </div>
+
+    <div id="scanLoader" aria-live="polite" aria-hidden="true">
+        <div class="scan-loader-card">
+            <div class="scan-loader-spinner"></div>
+            <div class="scan-loader-title">Loading Ticket</div>
+            <div class="scan-loader-copy">Verifying your QR pass and preparing the secure ticket view.</div>
+        </div>
+    </div>
+
+    <!-- ══ MAIN PAGE ══ -->
+    <div id="mainPage">
+
+        <!-- Success Banner -->
+        <div class="success-banner">
+            <div class="success-icon"><i class="fas fa-check"></i></div>
+            <div class="success-text">
+                <h3>✅ Booking Confirmed & Verified</h3>
+                <p>Your slot has been locked. Ticket is valid for single-exit use only.</p>
+            </div>
+            <div class="success-pnr" id="pnrDisplay">PNR: ——</div>
+        </div>
+
+    <!-- Ticket Switcher (for multiple active tickets) -->
+    <div id="ticketSwitcher" style="display: none; width: 100%; max-width: 1000px; margin-bottom: 12px;"></div>
+
+        <!-- THE TICKET -->
+        <div id="ticket-content">
+
+            <!-- Header -->
+            <div class="tk-header">
+                <div class="tk-brand">
+                    <div class="tk-brand-icon" style="background: rgba(255, 255, 255, 0.1); border: 1.5px solid rgba(0, 180, 216, 0.5); box-shadow: 0 0 12px rgba(0, 180, 216, 0.3); padding: 6px; border-radius: 10px; display: flex; align-items: center; justify-content: center;"><img src="logo.png" style="width: 100%; height: 100%; object-fit: contain; display: block; transform: scale(1.15) translateY(5%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" alt="Logo"></div>
+                    <div>
+                        <div class="tk-brand-name">ParkMate<span>Prime</span></div>
+                        <div class="tk-brand-tag">Smart Parking Platform</div>
+                    </div>
+                </div>
+                <div class="tk-head-center">
+                    <div class="tk-ticket-label">E-Parking Ticket</div>
+                    <div class="tk-ticket-sub">GATE PASS · SINGLE USE · NON-TRANSFERABLE</div>
+                </div>
+                <div class="tk-qr">
+                    <img id="qr-top" src="" alt="QR Code">
+                    <div class="tk-qr-label">Scan at gate</div>
+                </div>
+            </div>
+
+            <!-- Security stripe -->
+            <div class="security-stripe">
+                <div class="sec-item">
+                    <div class="sec-dot"></div> SECURE GATEWAY VERIFIED
+                </div>
+                <div class="sec-item" id="secHash">HASH: ——————</div>
+                <div class="sec-item">ParkMate Secure v3.0</div>
+                <div class="sec-item">ENCRYPTED · AES-256</div>
+            </div>
+
+            <!-- White ticket body -->
+            <div class="tk-body">
+
+                <!-- Meta row -->
+                <div class="tk-meta-row">
+                    <div class="tk-meta-cell">
+                        <div class="tk-meta-label">Token / PNR Number</div>
+                        <div class="tk-meta-val big" id="t-token">——</div>
+                    </div>
+                    <div class="tk-meta-cell">
+                        <div class="tk-meta-label">Booking Date & Time</div>
+                        <div class="tk-meta-val" id="t-date">——</div>
+                    </div>
+                    <div class="tk-meta-cell">
+                        <div class="tk-meta-label">Valid Until</div>
+                        <div class="tk-meta-val orange" id="t-valid">——</div>
+                    </div>
+                    <div class="tk-meta-cell">
+                        <div class="tk-meta-label">Class / Zone</div>
+                        <div class="tk-meta-val" id="t-zone">——</div>
+                    </div>
+                </div>
+
+                <!-- Main info -->
+                <div class="tk-main">
+                    <div class="tk-vehicle-section">
+                        <div class="tk-field-label">Vehicle Registration</div>
+                        <div class="tk-plate" id="t-plate">——</div>
+                        <div style="margin-top: 12px;">
+                            <div class="tk-field-label">Owner Name</div>
+                            <div class="tk-field-val" id="t-owner">——</div>
+                        </div>
+                    </div>
+                    <div class="tk-slot-section">
+                        <div
+                            style="font-size:0.65rem;letter-spacing:2px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:4px;z-index:1;">
+                            Slot No.</div>
+                        <div class="tk-slot-num" id="t-slot">——</div>
+                        <div class="tk-slot-zone" id="t-zone2">ZONE ·</div>
+                    </div>
+                    <div class="tk-time-section">
+                        <div class="tk-field-label">Park-In Date &amp; Time</div>
+                        <div class="tk-field-val" id="t-time">——</div>
+                        <div style="margin-top: 12px;">
+                            <div class="tk-field-label">Rate / Hr</div>
+                            <div class="tk-field-val orange" id="t-rate">——</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tk-rate-note" id="t-rateNote" style="padding: 0 24px 16px;">Dynamic billing updates every minute until exit.</div>
+
+                <!-- Details grid -->
+                <div class="tk-details">
+                    <div class="tk-detail-cell">
+                        <div class="tk-meta-label">Amount to be paid</div>
+                        <div class="tk-meta-val big orange" id="t-amount">——</div>
+                    </div>
+                    <div class="tk-detail-cell">
+                        <div class="tk-meta-label">Payment Method</div>
+                        <div class="tk-meta-val" id="t-payment">——</div>
+                    </div>
+                    <div class="tk-detail-cell">
+                        <div class="tk-meta-label">Vehicle Type</div>
+                        <div class="tk-meta-val" id="t-vtype">——</div>
+                    </div>
+                    <div class="tk-detail-cell">
+                        <div class="tk-meta-label">Parking Duration</div>
+                        <div class="tk-meta-val" id="t-duration">â€”â€”</div>
+                    </div>
+                    <div class="tk-detail-cell full-span">
+                        <div class="tk-meta-label">Booking Date &amp; Time</div>
+                        <div class="tk-meta-val" id="t-booking-detail">--</div>
+                    </div>
+                    <div class="tk-detail-cell full-span">
+                        <div class="tk-meta-label">Park-In Date &amp; Time</div>
+                        <div class="tk-meta-val" id="t-entry-detail">--</div>
+                    </div>
+                </div>
+
+                <!-- Status row -->
+                <div class="tk-status-row">
+                    <div class="tk-verified">
+                        <div class="verified-badge" id="t-statusBadge"><i class="fas fa-shield-check"></i> VERIFIED &amp; ACTIVE</div>
+                        <div style="font-size:0.72rem;color:var(--text3);" class="tk-status-note" id="t-statusNote">Authentication successful · No tampering
+                            detected</div>
+                    </div>
+                    <div class="tk-security-hash" id="t-hashDisplay">——</div>
+                </div>
+
+                <!-- Perforated tear line -->
+                <div class="perforated">
+                    <div class="perf-text">✂ TEAR HERE — STUB COPY FOR PASSENGER ✂</div>
+                </div>
+
+                <!-- STUB -->
+                <div class="tk-stub">
+                    <div class="stub-cell">
+                        <div class="stub-label">Token</div>
+                        <div class="stub-val" id="stub-token">——</div>
+                    </div>
+                    <div class="stub-cell">
+                        <div class="stub-label">Vehicle</div>
+                        <div class="stub-val" id="stub-veh">——</div>
+                    </div>
+                    <div class="stub-cell">
+                        <div class="stub-label">Slot</div>
+                        <div class="stub-val" id="stub-slot">——</div>
+                    </div>
+                    <div class="stub-cell">
+                        <div class="stub-label">Park-In</div>
+                        <div class="stub-val" id="stub-time">——</div>
+                    </div>
+                    <div class="stub-cell">
+                        <div class="stub-label">Amount</div>
+                        <div class="stub-val orange" id="stub-amt">——</div>
+                    </div>
+                    <div class="stub-qr">
+                        <img id="qr-bottom" src="" alt="QR">
+                    </div>
+                </div>
+
+                <!-- Barcode -->
+                <div class="tk-barcode">
+                    <div style="font-size:0.65rem;color:var(--text3);letter-spacing:1px;white-space:nowrap;">|||</div>
+                    <div class="barcode-img" id="barcode"></div>
+                    <div class="barcode-num" id="barcodeNum">——</div>
+                    <div style="font-size:0.65rem;color:var(--text3);letter-spacing:1px;white-space:nowrap;">|||</div>
+                </div>
+
+            </div><!-- end tk-body -->
+
+            <!-- Ticket Footer -->
+            <div class="tk-footer">
+                <div class="tk-footer-left">
+                    <strong>Security Notice:</strong> This ticket is authenticated via ParkMate Secure Gateway v3.0.
+                    Valid for one exit only. Any tampering voids this pass.
+                    For support: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9ae9efeaeaf5e8eedaeafbe8f1f7fbeeffb4f3f4">[email&#160;protected]</a> | Helpline: 1800-PARK-NOW
+                </div>
+                <div class="tk-footer-right">
+                    <div class="tk-valid-chip" id="t-valid-chip">
+                        <div class="vdot"></div> ACTIVE PASS
+                    </div>
+                    <div style="font-family:var(--mono);font-size:0.6rem;color:rgba(255,255,255,0.2);margin-top:4px;"
+                        id="t-issued">——</div>
+                </div>
+            </div>
+
+        </div><!-- end #ticket-content -->
+
+        <!-- Countdown Timer -->
+        <div class="countdown-card">
+            <div>
+                <div class="cd-label">⏱ Live Parking Session Duration</div>
+            </div>
+            <div class="cd-units">
+                <div class="cd-unit"><span class="cd-num" id="cdH">00</span><span class="cd-unit-label">Hours</span>
+                </div>
+                <div class="cd-unit"><span class="cd-num" id="cdM">00</span><span class="cd-unit-label">Mins</span>
+                </div>
+                <div class="cd-unit"><span class="cd-num" id="cdS">00</span><span class="cd-unit-label">Secs</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Algorithm Intelligence Panel -->
+        <div class="algo-panel">
+            <div class="algo-title"><i class="fas fa-brain"></i> ParkMind Intelligence — Booking Analytics</div>
+            <div class="algo-grid" id="algoGrid">
+                <!-- filled by JS -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-row">
+            <button onclick="shareTicket()" class="btn btn-share"><i class="fas fa-share-alt"></i> Share</button>
+            <a href="index.html?v=1" class="btn btn-home"><i class="fas fa-home"></i> Dashboard</a>
+            <button onclick="cancelTicket()" class="btn btn-cancel"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+
+    </div><!-- end #mainPage -->
+
+    <div id="toasts"></div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="supabase-store.js?v=1"></script>
+    <script>
+        // ═══════════════════════════════════════════════════════
+        //   SOUND ENGINE
+        // ═══════════════════════════════════════════════════════
+        const SFX = {
+            ctx: null,
+            init() {
+                try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { }
+            },
+            play(type) {
+                if (!this.ctx) this.init();
+                if (!this.ctx) return;
+                const o = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                o.connect(g); g.connect(this.ctx.destination);
+                const t = this.ctx.currentTime;
+                const presets = {
+                    beep: { freq: 880, type: 'sine', dur: 0.08, vol: 0.12 },
+                    click: { freq: 440, type: 'square', dur: 0.04, vol: 0.08 },
+                    step: { freq: 660, type: 'sine', dur: 0.1, vol: 0.1 },
+                    success: { freq: 1047, type: 'sine', dur: 0.3, vol: 0.15 },
+                    confirm: { freq: 523, type: 'sine', dur: 0.15, vol: 0.12 },
+                    print: { freq: 300, type: 'sawtooth', dur: 0.2, vol: 0.08 },
+                };
+                const p = presets[type] || presets.beep;
+                o.frequency.setValueAtTime(p.freq, t);
+                if (type === 'success') {
+                    o.frequency.setValueAtTime(523, t); o.frequency.setValueAtTime(659, t + 0.1); o.frequency.setValueAtTime(784, t + 0.2);
+                }
+                o.type = p.type;
+                g.gain.setValueAtTime(p.vol, t);
+                g.gain.exponentialRampToValueAtTime(0.001, t + p.dur);
+                o.start(t); o.stop(t + p.dur);
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════
+        //   ALGORITHM ENGINE
+        // ═══════════════════════════════════════════════════════
+        function generatePNR(veh, slot, time) {
+            // PNR = Base36 of (timestamp XOR slot hash XOR vehicle hash)
+            const vh = [...veh].reduce((a, c) => a ^ c.charCodeAt(0), 0);
+            const ts = Date.now() % 999999;
+            const hash = ((ts ^ (slot * 137) ^ vh) >>> 0).toString(36).toUpperCase().padStart(8, '0');
+            return 'PM' + hash;
+        }
+
+        function computeSecurityHash(token, veh, slot) {
+            // Simple deterministic hash for display
+            let h = 0x811c9dc5;
+            const str = token + veh + slot;
+            for (let i = 0; i < str.length; i++) {
+                h ^= str.charCodeAt(i);
+                h = (h * 0x01000193) >>> 0;
+            }
+            return h.toString(16).toUpperCase().padStart(8, '0');
+        }
+
+        function detectZone(slot) {
+            const n = parseInt(slot) || 1;
+            if (n > 600) return { code: 'D', name: 'ZONE D · LEVEL 2', rate: 36 };
+            if (n > 400) return { code: 'C', name: 'ZONE C · LEVEL 3', rate: 30 };
+            if (n > 150) return { code: 'B', name: 'ZONE B · LEVEL 1', rate: 25 };
+            return { code: 'A', name: 'ZONE A · ROOFTOP', rate: 15 };
+        }
+
+        function detectVehicleType(typeStr) {
+            const t = String(typeStr || '').toLowerCase();
+            if (t === 'ev') return { type: 'EV', icon: '⚡', size: 'Standard' };
+            if (t === 'suv' || t === 'truck') return { type: 'SUV', icon: '🚙', size: 'Large' };
+            if (t === 'bike' || t === 'motorcycle') return { type: 'Bike', icon: '🏍️', size: 'Compact' };
+            return { type: 'Car', icon: '🚗', size: 'Standard' };
+        }
+
+    function getVehicleMultiplier(vtype) {
+        return 1.0;
+    }
+
+        function getZoneDetails(ticket, isPrime, explicitVType = null) {
+            const slotNum = parseInt(ticket?.slot) || 1;
+            let normalRate, primeRate, zoneName;
+            
+            const vtype = String(explicitVType || ticket?.vtype || ticket?.vehicle_type || ticket?.type || '').toLowerCase();
+            
+            if (vtype === 'suv' || vtype === 'truck' || (!vtype && slotNum > 600)) {
+                normalRate = 36; primeRate = 28;
+            } else if (vtype === 'ev' || (!vtype && slotNum > 400)) {
+                normalRate = 30; primeRate = 24;
+            } else if (vtype === 'bike' || vtype === 'motorcycle' || (!vtype && slotNum <= 150)) {
+                normalRate = 15; primeRate = 12;
+            } else {
+                normalRate = 25; primeRate = 20;
+            }
+
+            if (slotNum > 600) zoneName = 'ZONE D · LEVEL 2';
+            else if (slotNum > 400) zoneName = 'ZONE C · LEVEL 3';
+            else if (slotNum > 150) zoneName = 'ZONE B · LEVEL 1';
+            else zoneName = 'ZONE A · ROOFTOP';
+
+            let baseRate = isPrime ? primeRate : normalRate;
+            const hourlyRate = Math.round(baseRate);
+            return {
+                hourlyRate,
+                perMinRate: hourlyRate / 60,
+                zoneName,
+            };
+        }
+
+        function getZoneRate(ticket, isPrime) {
+            const rawType = ticket.vehicle_type || ticket.vtype || ticket.type || 'car';
+            return getZoneDetails(ticket, isPrime, rawType).hourlyRate;
+        }
+        
+        function getZonePerMinRate(ticket, isPrime) {
+            const rawType = ticket.vehicle_type || ticket.vtype || ticket.type || 'car';
+            return getZoneDetails(ticket, isPrime, rawType).perMinRate;
+        }
+        
+        function computeOccupancy(booked) {
+            const total = 800;
+            const occ = Math.floor(total * 0.35) + booked;
+            const pct = Math.min(99, Math.round(occ / total * 100));
+            let level, color;
+            if (pct < 40) { level = 'LOW'; color = 'green'; }
+            else if (pct < 70) { level = 'MODERATE'; color = 'orange'; }
+            else { level = 'HIGH'; color = 'red'; }
+            return { occ, total, pct, level, color };
+        }
+
+        function computeSavings(amount, zone) {
+            const maxRate = 36;
+            const saved = Math.max(0, maxRate * Math.round(amount / zone.rate) - amount);
+            return saved;
+        }
+
+        function isTicketExpired(ticket) {
+            const status = String(ticket?.status || '').toLowerCase();
+            if (['completed', 'paid', 'closed', 'expired'].includes(status)) return true;
+            if (ticket?.completed_at || ticket?.paid_at || ticket?.exit_time || ticket?.ended_at) return true;
+            return false;
+        }
+
+        function formatMoney(value) {
+            return '₹' + Number(value || 0).toFixed(2).replace(/\.00$/, '');
+        }
+
+        function applyTicketValidityState(ticket, state) {
+            const {
+                expired,
+                isPrime,
+                hourlyRate,
+                perMinRate,
+                standardHourlyRate,
+                validUntilLabel
+            } = state;
+            const validEl = document.getElementById('t-valid');
+            const rateEl = document.getElementById('t-rate');
+            const rateNoteEl = document.getElementById('t-rateNote');
+            const chipEl = document.getElementById('t-valid-chip');
+            const badgeEl = document.getElementById('t-statusBadge');
+            const statusNoteEl = document.getElementById('t-statusNote');
+            const membershipLabel = isPrime ? 'Prime' : 'Standard';
+
+            if (isPrime) {
+                const standardHourly = Number(standardHourlyRate || hourlyRate);
+                const standardPerMin = standardHourly / 60;
+                rateEl.innerHTML = `<span style="text-decoration:line-through;color:var(--text3);font-size:.92rem;">${formatMoney(standardHourly)}/hr · ${formatMoney(standardPerMin)}/min</span> <span style="color:var(--orange2);font-weight:800;">${formatMoney(hourlyRate)}/hr · ${formatMoney(perMinRate)}/min</span>`;
+            } else {
+                rateEl.textContent = `${formatMoney(hourlyRate)}/hr · ${formatMoney(perMinRate)}/min`;
+            }
+
+            if (expired) {
+                validEl.textContent = 'Ticket expired - book a new ticket to scan';
+                rateNoteEl.textContent = 'This pass was already completed. Re-scan is blocked after exit or on another day.';
+                rateNoteEl.classList.add('expired');
+                badgeEl.innerHTML = '<i class="fas fa-ban"></i> EXPIRED TICKET';
+                badgeEl.classList.add('expired');
+                statusNoteEl.textContent = 'This ticket is no longer valid. Please book a new ticket before scanning at the gate.';
+                statusNoteEl.classList.add('expired');
+                chipEl.innerHTML = '<div class="vdot"></div> EXPIRED TICKET';
+                chipEl.classList.add('expired');
+                return;
+            }
+
+            validEl.textContent = validUntilLabel || '--';
+            rateNoteEl.textContent = `Live rate applies until exit · ${membershipLabel} pricing active for this booking.`;
+            rateNoteEl.classList.remove('expired');
+            badgeEl.innerHTML = '<i class="fas fa-shield-check"></i> VERIFIED &amp; ACTIVE';
+            badgeEl.classList.remove('expired');
+            statusNoteEl.textContent = 'Authentication successful · No tampering detected';
+            statusNoteEl.classList.remove('expired');
+            chipEl.innerHTML = '<div class="vdot"></div> ACTIVE PASS';
+            chipEl.classList.remove('expired');
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //   GENERATION ANIMATION
+        // ═══════════════════════════════════════════════════════
+        const steps = ['s1', 's2', 's3', 's4', 's5'];
+        const msgs = [
+            'AUTHENTICATING VEHICLE CREDENTIALS...',
+            'LOCKING PARKING SLOT IN DATABASE...',
+            'GENERATING SECURE QR CODES...',
+            'COMPILING E-TICKET DOCUMENT...',
+            'RUNNING SHA-256 HASH VERIFICATION...',
+            'TICKET GENERATION COMPLETE!'
+        ];
+        let stepIdx = 0;
+        let pct = 0;
+
+        function advanceStep() {
+            SFX.play('step');
+            if (stepIdx > 0) document.getElementById(steps[stepIdx - 1]).className = 'gen-step done';
+            if (stepIdx < steps.length) {
+                document.getElementById(steps[stepIdx]).className = 'gen-step active';
+                
+                if (ticketData && ticketData.status === 'completed') {
+                    if (cdInterval) clearInterval(cdInterval);
+                }
+            }
+            document.getElementById('genMsg').textContent = msgs[stepIdx] || msgs[msgs.length - 1];
+            stepIdx++;
+        }
+
+        function animateGeneration() {
+            const totalMs = 3200;
+            const stepMs = totalMs / 5;
+            const tickMs = 40;
+            const barEl = document.getElementById('genBar');
+            const pctEl = document.getElementById('genPct');
+
+            advanceStep();
+
+            const ticker = setInterval(() => {
+                pct = Math.min(100, pct + (100 / (totalMs / tickMs)));
+                barEl.style.width = pct + '%';
+                pctEl.textContent = Math.round(pct) + '%';
+                SFX.play('click');
+
+                const stepThreshold = Math.floor(pct / 20);
+                if (stepThreshold > stepIdx && stepIdx < steps.length) {
+                    advanceStep();
+                }
+
+                if (pct >= 100) {
+                    clearInterval(ticker);
+                    document.getElementById('genMsg').textContent = msgs[msgs.length - 1];
+                    if (stepIdx <= steps.length) {
+                        document.getElementById(steps[steps.length - 1]).className = 'gen-step done';
+                    }
+                    SFX.play('success');
+                    setTimeout(showTicket, 500);
+                }
+            }, tickMs);
+        }
+
+        function showTicket() {
+            const overlay = document.getElementById('genOverlay');
+            const scanLoader = document.getElementById('scanLoader');
+            const main = document.getElementById('mainPage');
+            if (scanLoader) {
+                scanLoader.classList.remove('active');
+                scanLoader.setAttribute('aria-hidden', 'true');
+            }
+            if (isImageView()) {
+                if (overlay) overlay.style.display = 'none';
+                main.classList.add('revealed');
+                return;
+            }
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.5s ease';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                main.classList.add('revealed');
+                SFX.play('confirm');
+                setTimeout(() => SFX.play('success'), 200);
+            }, 500);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //   TICKET DATA POPULATION
+        // ═══════════════════════════════════════════════════════
+        let ticketData = null;
+        let cdInterval = null;
+        let cdEnd = null;
+        function getStoredUserId() {
+            return localStorage.getItem('pm_user_id') || JSON.parse(pmStore.getItem('pmCurrentUser') || 'null')?.id || null;
+        }
+
+        function getBannerSnapshot(token) {
+            if (!token) return null;
+            try {
+                const snapshot = JSON.parse(localStorage.getItem('pm_ticket_banner_snapshot') || 'null');
+                if (!snapshot || snapshot.token !== token) return null;
+                return snapshot;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function isImageView() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('view') === 'image' || params.get('preview') === 'true';
+        }
+
+        function applyImageViewMode() {
+            if (!isImageView()) return;
+            const overlay = document.getElementById('genOverlay');
+            const scanLoader = document.getElementById('scanLoader');
+            if (overlay) overlay.style.display = 'none';
+            if (scanLoader) {
+                scanLoader.classList.add('active');
+                scanLoader.setAttribute('aria-hidden', 'false');
+            }
+            const main = document.getElementById('mainPage');
+            main.style.padding = '18px 12px';
+            const hideSelectors = ['.action-row', '.countdown-card', '.algo-panel', '.success-banner'];
+            hideSelectors.forEach(selector => {
+                const el = document.querySelector(selector);
+                if (el) el.style.display = 'none';
+            });
+        }
+
+        async function apiJson(url, options = {}) {
+            const res = await fetch(url, options);
+            const text = await res.text();
+            const data = text ? JSON.parse(text) : {};
+            if (!res.ok) throw new Error(data.error || 'Request failed');
+            return data;
+        }
+
+        function parseTicketDateMs(source) {
+            if (!source) return NaN;
+            const parsed = new Date(source).getTime();
+            return Number.isFinite(parsed) ? parsed : NaN;
+        }
+
+        function formatDuration(ticket) {
+            let text = "";
+            if (ticket.duration_hours > 0) {
+                text += ticket.duration_hours + " hr ";
+            }
+            if (ticket.duration_minutes > 0) {
+                text += ticket.duration_minutes + " min";
+            }
+            if (!text) text = "2 hr"; // fallback
+            return text.trim();
+        }
+
+        function formatIstDateTime(dateMs) {
+            if (!Number.isFinite(dateMs)) return '--';
+            return new Date(dateMs).toLocaleString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Kolkata'
+            }).replace(/,/g, ' ·');
+        }
+
+        function populateTicket(t) {
+            // ── Algorithms ──
+            const snapshot = getBannerSnapshot(t.token || t.pnr);
+            const isPrime = (JSON.parse(pmStore.getItem('pmCurrentUser') || 'null')?.prime?.active) || false;
+            
+            const rawType = snapshot?.vehicleType || t.vehicle_type || t.vtype || t.type || 'car';
+            const vtype = detectVehicleType(rawType);
+            
+            const zoneInfo = getZoneDetails(t, isPrime, rawType);
+            const zone = {
+                ...detectZone(t.slot),
+                name: zoneInfo.zoneName,
+                rate: zoneInfo.hourlyRate
+            };
+            const tokenVal = t.token || generatePNR(t.veh, t.slot, t.timeStr);
+            const secHash = computeSecurityHash(tokenVal, t.veh, t.slot);
+            const booked = (JSON.parse(pmStore.getItem('bookedSlots')) || []).length;
+            const occ = computeOccupancy(booked);
+            const savings = computeSavings(t.amount || 40, zone);
+            
+            const bookingSource = snapshot?.bookingCreatedAt || t.booking_time || '';
+            const bookingTimeMs = parseTicketDateMs(bookingSource);
+            const fallbackEntrySource = t.entry_at || t.created_at;
+            const parsedEntryMs = parseTicketDateMs(fallbackEntrySource);
+            const entryTimeMs = Number(snapshot?.entryMs) || (Number.isFinite(parsedEntryMs) ? parsedEntryMs : (t.timestamp || Date.now()));
+            const payment = t.payMethod || 'ParkMate Wallet';
+            const ownerName = snapshot?.ownerName || t.name || (JSON.parse(pmStore.getItem('currentUser'))?.name) || 'Vehicle Owner';
+            const vehicleLabel = snapshot?.vehicleNumber || t.veh || '——';
+            const vehicleTypeLabel = vtype.type.toUpperCase();
+            const bookingDateTimeLabel = Number.isFinite(bookingTimeMs) ? formatIstDateTime(bookingTimeMs) : 'Booking time unavailable';
+            const fullEntryLabelIst = formatIstDateTime(entryTimeMs);
+            const [entryDateLabel = fullEntryLabelIst, entryTimeLabel = ''] = String(fullEntryLabelIst).split(' · ');
+            const fullEntryLabel = entryDateLabel + ' · ' + entryTimeLabel;
+            const expired = isTicketExpired(t);
+            
+            const durationHrs = Number(snapshot?.durationHours || t.duration_hours || t.duration || 0);
+            const durationMins = Number(snapshot?.durationMinutes || t.duration_minutes || 0);
+            const expectedExitMs = t.expected_exit_at ? new Date(t.expected_exit_at).getTime() : NaN;
+            let bookedDurationLabel = snapshot?.bookedDurationLabel;
+            if (!bookedDurationLabel) {
+                bookedDurationLabel = formatDuration(t);
+            }
+            const validUntil = isFinite(expectedExitMs) ? new Date(expectedExitMs) : new Date(entryTimeMs + (durationHrs * 3600000) + (durationMins * 60000));
+            const validUntilIstLabel = validUntil.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).replace(/,/g, ' ·');
+
+            // QR
+            const viewUrl = new URL(`TICKET.html?token=${encodeURIComponent(tokenVal)}&view=image`, window.location.href).toString();
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(viewUrl)}&color=0f2044&bgcolor=ffffff`;
+            document.getElementById('qr-top').src = qrUrl;
+            document.getElementById('qr-bottom').src = qrUrl;
+
+            // Fill ticket
+            document.getElementById('t-token').textContent = tokenVal;
+            document.getElementById('t-date').textContent = bookingDateTimeLabel;
+            document.getElementById('t-zone').textContent = zone.name;
+            document.getElementById('t-plate').textContent = vehicleLabel;
+            document.getElementById('t-owner').textContent = ownerName;
+            document.getElementById('t-slot').textContent = '#' + t.slot;
+            document.getElementById('t-zone2').textContent = zone.name;
+            document.getElementById('t-time').textContent = fullEntryLabelIst;
+            document.getElementById('t-duration').textContent = bookedDurationLabel;
+            document.getElementById('t-booking-detail').textContent = bookingDateTimeLabel;
+            document.getElementById('t-entry-detail').textContent = fullEntryLabelIst;
+            document.getElementById('t-payment').textContent = payment;
+            document.getElementById('t-vtype').textContent = vtype.icon + ' ' + vehicleTypeLabel;
+            document.getElementById('secHash').textContent = 'HASH: ' + secHash;
+            document.getElementById('t-hashDisplay').textContent = 'SHA: ' + secHash.substring(0, 4) + '···' + secHash.slice(-4);
+            document.getElementById('t-issued').textContent = 'Issued: ' + bookingDateTimeLabel + ' IST';
+            document.getElementById('pnrDisplay').textContent = 'PNR: ' + tokenVal;
+            applyTicketValidityState(t, {
+                expired,
+                isPrime,
+                hourlyRate: zone.rate,
+                perMinRate: zone.rate / 60,
+                standardHourlyRate: getZoneDetails(t, false, rawType).hourlyRate,
+                validUntilLabel: validUntilIstLabel
+            });
+
+            // Stub
+            document.getElementById('stub-token').textContent = tokenVal;
+            document.getElementById('stub-veh').textContent = vehicleLabel;
+            document.getElementById('stub-slot').textContent = '#' + t.slot;
+            document.getElementById('stub-time').textContent = fullEntryLabelIst || '--';
+
+            // Barcode number
+            const bc = tokenVal + secHash + t.slot;
+            document.getElementById('barcodeNum').textContent = bc;
+
+            // ── Algorithm Panel ──
+            const algoData = [
+                { label: 'Slot Algorithm', val: `Zone ${zone.code} · #${t.slot}`, color: 'orange', bar: Math.min(100, parseInt(t.slot) / 13) },
+                { label: 'Occupancy Level', val: occ.pct + '% · ' + occ.level, color: occ.color, bar: occ.pct },
+                { label: 'Rate Classification', val: '₹' + zone.rate + '/hr · ' + zone.name.split('·')[0].trim(), color: 'orange', bar: zone.rate / 30 * 100 },
+                { label: 'Security Score', val: '98.4% · VERIFIED', color: 'green', bar: 98 },
+                { label: 'Savings vs Max Rate', val: savings > 0 ? '₹' + savings + ' saved' : 'Best Rate', color: 'green', bar: Math.min(100, savings / 30 * 100 + 60) },
+            ];
+            const grid = document.getElementById('algoGrid');
+            grid.innerHTML = algoData.map(d => `
+    <div class="algo-card">
+      <div class="algo-card-label">${d.label}</div>
+      <div class="algo-card-val ${d.color}">${d.val}</div>
+      <div class="algo-bar"><div class="algo-bar-fill ${d.color !== 'orange' ? d.color : ''}" style="width:0%" data-w="${d.bar}"></div></div>
+    </div>
+  `).join('');
+            // Animate bars
+            setTimeout(() => {
+                grid.querySelectorAll('.algo-bar-fill').forEach(el => {
+                    el.style.width = el.dataset.w + '%';
+                });
+            }, 400);
+
+            // ── Live Session ──
+            startLiveSession(entryTimeMs, zone.rate, snapshot?.amount, expired);
+        }
+
+        function startLiveSession(entryTimeMs, hourlyRate, snapshotAmount, expired = false) {
+            const perMinRate = hourlyRate / 60;
+
+            function tick() {
+                const now = Date.now();
+                if (now < entryTimeMs) {
+                    document.getElementById('cdH').textContent = "00";
+                    document.getElementById('cdM').textContent = "00";
+                    document.getElementById('cdS').textContent = "00";
+                    document.getElementById('t-amount').textContent = '₹0';
+                    document.getElementById('stub-amt').textContent = '₹0';
+                    return;
+                }
+                const elapsedMs = Math.max(0, now - entryTimeMs);
+                const totalSecs = Math.floor(elapsedMs / 1000);
+                const totalMins = Math.floor(totalSecs / 60);
+                const elapsedHrs = elapsedMs / 3600000;
+
+                let bill;
+                if (totalMins < 1) {
+                    bill = Math.ceil(hourlyRate / 60);
+                } else if (elapsedHrs < 1) {
+                    bill = Math.ceil(totalMins * perMinRate);
+                } else {
+                    bill = Math.round(hourlyRate * elapsedHrs);
+                }
+
+                if (expired && Number.isFinite(Number(ticketData?.amount))) {
+                    bill = Number(ticketData.amount);
+                }
+
+                const h = Math.floor(totalSecs / 3600);
+                const m = Math.floor((totalSecs % 3600) / 60);
+                const s = totalSecs % 60;
+
+                document.getElementById('cdH').textContent = String(h).padStart(2, '0');
+                document.getElementById('cdM').textContent = String(m).padStart(2, '0');
+                document.getElementById('cdS').textContent = String(s).padStart(2, '0');
+
+                document.getElementById('t-amount').textContent = '₹' + bill;
+                document.getElementById('stub-amt').textContent = '₹' + bill;
+                
+                if (expired) {
+                    if (cdInterval) clearInterval(cdInterval);
+                }
+            }
+            tick();
+            cdInterval = setInterval(tick, 1000);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //   ACTIONS
+        // ═══════════════════════════════════════════════════════
+
+        async function downloadTicketPdf() {
+            const ticket = document.getElementById('ticket-content');
+            if (!ticket || typeof html2pdf === 'undefined') {
+                showToast('PDF export is not available right now.', 'err');
+                return;
+            }
+
+            const token = document.getElementById('t-token')?.textContent?.trim() || 'parkmate-ticket';
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'fixed';
+            wrapper.style.left = '-10000px';
+            wrapper.style.top = '0';
+            wrapper.style.width = '1120px';
+            wrapper.style.padding = '20px';
+            wrapper.style.background = '#e9eef8';
+            wrapper.style.zIndex = '-1';
+
+            const clone = ticket.cloneNode(true);
+            clone.style.width = '100%';
+            clone.style.margin = '0';
+            clone.style.boxShadow = '0 20px 50px rgba(15, 23, 42, 0.12)';
+            clone.style.borderRadius = '22px';
+
+            wrapper.appendChild(clone);
+            document.body.appendChild(wrapper);
+
+            const options = {
+                margin: [0, 0, 0, 0],
+                filename: `${token}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#e9eef8'
+                },
+                jsPDF: {
+                    unit: 'px',
+                    format: [1160, 860],
+                    orientation: 'landscape'
+                }
+            };
+
+            try {
+                SFX.play('print');
+                showToast('Preparing ticket PDF...', 'inf');
+                await html2pdf().set(options).from(wrapper).save();
+                showToast('Ticket PDF downloaded successfully.', 'ok');
+            } catch (error) {
+                showToast('Unable to download ticket PDF.', 'err');
+            } finally {
+                wrapper.remove();
+            }
+        }
+
+        function shareTicket() {
+            SFX.play('click');
+            const pnr = document.getElementById('t-token').textContent;
+            const veh = document.getElementById('t-plate').textContent;
+            const slot = document.getElementById('t-slot').textContent;
+            const text = `ParkMate Prime E-Ticket\nPNR: ${pnr}\nVehicle: ${veh}\nSlot: ${slot}\nStatus: VERIFIED ✅`;
+            if (navigator.share) {
+                navigator.share({ title: 'ParkMate E-Ticket', text }).catch(() => { });
+            } else {
+                navigator.clipboard?.writeText(text).then(() => showToast('📋 Ticket details copied!', 'ok'));
+            }
+        }
+
+        async function resendBookingEmail() {
+            const userId = getStoredUserId();
+            if (!userId || !ticketData?.id) {
+                showToast('Booking details are not ready yet.', 'err');
+                return;
+            }
+            try {
+                const payments = await apiJson(`api.php?action=payment_history&user_id=${encodeURIComponent(userId)}`);
+                const payment = (payments.history || []).find(p => Number(p.ticket_id) === Number(ticketData.id) && p.status !== 'refunded');
+                if (!payment) {
+                    showToast('No payment receipt found for this booking.', 'err');
+                    return;
+                }
+                await apiJson('api.php?action=send_booking_notifications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        ticket_id: ticketData.id,
+                        payment_transaction_id: payment.id
+                    })
+                });
+                showToast('Booking confirmation, ticket PDF, and receipt sent.', 'ok');
+            } catch (error) {
+                showToast(error.message || 'Unable to send booking docs.', 'err');
+            }
+        }
+
+        function cancelTicket() {
+            SFX.play('beep');
+            if (!confirm('Cancel this booking? This cannot be undone.')) return;
+            const bookedSlots = (JSON.parse(pmStore.getItem('bookedSlots') || '[]') || [])
+                .map(Number)
+                .filter(slot => slot !== Number(ticketData?.slot));
+            pmStore.setItem('bookedSlots', JSON.stringify(bookedSlots));
+            pmStore.removeItem('activeTicket');
+            showToast('Booking cancelled.', 'err');
+            setTimeout(() => window.location.href = 'index.html?v=1', 1500);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //   RIPPLE EFFECT
+        // ═══════════════════════════════════════════════════════
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                const r = document.createElement('span');
+                r.className = 'ripple';
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX - rect.left - size / 2}px;top:${e.clientY - rect.top - size / 2}px`;
+                this.appendChild(r);
+                setTimeout(() => r.remove(), 600);
+            });
+        });
+
+        // ═══════════════════════════════════════════════════════
+        //   TOAST
+        // ═══════════════════════════════════════════════════════
+        function showToast(msg, type = 'ok') {
+            const c = document.getElementById('toasts');
+            const d = document.createElement('div');
+            d.className = 'toast ' + type;
+            const icons = { ok: 'check-circle', err: 'exclamation-circle', inf: 'info-circle' };
+            d.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'}"></i> ${msg}`;
+            c.appendChild(d);
+            setTimeout(() => { d.style.opacity = '0'; d.style.transition = '0.25s'; setTimeout(() => d.remove(), 250); }, 3500);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //   BOOT
+        // ═══════════════════════════════════════════════════════
+        window.addEventListener('load', async () => {
+            applyImageViewMode();
+            // DEV FALLBACK: create mock ticket if none in pmStore
+            let t = null;
+            let localTicket = null;
+            try { localTicket = JSON.parse(pmStore.getItem('activeTicket')); } catch (e) { }
+
+            const token = new URLSearchParams(window.location.search).get('token');
+            if (token) {
+                try {
+                    const remote = await apiJson(`api.php?action=get_ticket_by_token&token=${encodeURIComponent(token)}`);
+                    if (remote.ticket) {
+                        let cDate = remote.ticket.created_at_utc || remote.ticket.created_at || new Date().toISOString();
+                        if (!cDate.includes('Z') && !cDate.includes('+')) {
+                            cDate = cDate.replace(' ', 'T') + 'Z';
+                        }
+                        t = {
+                            id: remote.ticket.id,
+                            token: remote.ticket.token,
+                            pnr: remote.ticket.token,
+                            veh: remote.ticket.veh,
+                            slot: remote.ticket.slot,
+                            timeStr: new Date(cDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                            amount: remote.ticket.amount,
+                            name: remote.ticket.name,
+                            booking_time: remote.ticket.booking_time || '',
+                            created_at: cDate,
+                            entry_at: remote.ticket.entry_at || cDate,
+                            duration: remote.ticket.duration_hours || remote.ticket.duration || 2,
+                            status: remote.ticket.status,
+                            vtype: remote.ticket.vehicle_type || 'car',
+                            zone: remote.ticket.zone || (remote.ticket.slot_type === 'EV' ? 'EV' : null)
+                        };
+                        pmStore.setItem('activeTicket', JSON.stringify(t));
+                    }
+                } catch (error) { }
+            }
+
+            if (!t && localTicket) {
+                t = localTicket;
+            }
+
+            if (!t) {
+                // Demo data for standalone preview
+                t = {
+                    token: 'PM' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+                    pnr: 'DEMO',
+                    veh: 'TN38K1234',
+                    slot: String(Math.floor(Math.random() * 400) + 1),
+                    timeStr: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+                    amount: 60,
+                    name: 'Demo User',
+                };
+            }
+
+            ticketData = t;
+            // Pre-fill ticket (hidden) then show after animation
+            populateTicket(t);
+            if (isImageView()) {
+                setTimeout(showTicket, 320);
+            } else {
+                animateGeneration();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            // Fallback: If opened directly in a new tab/window without the modal, add a Back button
+            if (isImageView() && window.self === window.top) {
+                const btn = document.createElement('button');
+                btn.innerHTML = '<i class="fas fa-arrow-left"></i> Back to Tickets';
+                btn.style.cssText = 'position:fixed;top:24px;left:24px;z-index:99999;padding:12px 24px;background:var(--orange);color:var(--navy);border:none;border-radius:12px;font-family:"Syne",sans-serif;font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 8px 24px rgba(255,153,0,0.4);display:flex;align-items:center;gap:10px;';
+                btn.onclick = () => window.history.back();
+                document.body.appendChild(btn);
+            }
+        });
+
+        // Print styles
+        const printCSS = document.createElement('style');
+        printCSS.textContent = `
+  @media print {
+    html, body {
+      background: white !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    body * {
+      visibility: hidden !important;
+    }
+    #ticket-content,
+    #ticket-content * {
+      visibility: visible !important;
+    }
+    #ticket-content {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+    }
+    .bg-canvas, .bg-grid, .action-row, .countdown-card, .algo-panel, .success-banner, #genOverlay {
+      display: none !important;
+    }
+  }`;
+        document.head.appendChild(printCSS);
+        </script>
+    <script>
+        (function () {
+            const APP_VERSION = "20260404.5";
+            function versionLocalHref(href) {
+                if (!href || /^(#|mailto:|tel:|javascript:)/i.test(href)) return href;
+                try {
+                    const url = new URL(href, window.location.href);
+                    if (url.origin !== window.location.origin) return href;
+                    if (!/\.html$/i.test(url.pathname)) return href;
+                    url.searchParams.set('v', APP_VERSION);
+                    return url.pathname + url.search + url.hash;
+                } catch (error) {
+                    return href;
+                }
+            }
+            document.querySelectorAll('a[href]').forEach((link) => {
+                link.setAttribute('href', versionLocalHref(link.getAttribute('href')));
+            });
+            window.withAppVersion = versionLocalHref;
+        })();
+    </script>
+    </body>
+</html>
