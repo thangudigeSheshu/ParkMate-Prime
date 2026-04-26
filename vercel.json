@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api.php",
+      "destination": "https://parkmate-prime.infinityfreeapp.com/api.php"
+    }
+  ]
+}
